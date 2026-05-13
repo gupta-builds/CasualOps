@@ -5,8 +5,8 @@ import { runCausalEngine } from "./hivemind-api";
 const PHASES: { phase: string; message: string }[] = [
   { phase: "TOKENIZE", message: "Tokenizing event space description" },
   { phase: "HYPOTHESIS", message: "Building causal hypothesis tree (depth=4)" },
-  { phase: "SAMPLE", message: "Sampling 128 counterfactual trajectories" },
-  { phase: "ESTIMATE", message: "Estimating ATE via doubly-robust IPW" },
+  { phase: "COMPILE", message: "Compiling evidence records into causal observations" },
+  { phase: "ESTIMATE", message: "Running gated causal estimator and refuters" },
   { phase: "SCORE", message: "Scoring strategies · risk · cost · speed" },
   { phase: "GRAPH", message: "Validating causal graph integrity" },
 ];

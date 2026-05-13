@@ -30,7 +30,6 @@ function confidenceStyle(c: string) {
       text: "text-emerald-300",
       stroke: "stroke-emerald-400",
       Icon: ShieldCheck,
-      pValue: "p < 0.01",
     };
   }
   if (lc === "low") {
@@ -41,7 +40,16 @@ function confidenceStyle(c: string) {
       text: "text-rose-300",
       stroke: "stroke-rose-400",
       Icon: ShieldAlert,
-      pValue: "p > 0.10",
+    };
+  }
+  if (lc === "insufficient_data") {
+    return {
+      label: "NO ESTIMATE",
+      ring: "border-slate-400/30",
+      bg: "from-slate-500/10 to-transparent",
+      text: "text-slate-300",
+      stroke: "stroke-slate-400",
+      Icon: ShieldAlert,
     };
   }
   return {
@@ -51,7 +59,6 @@ function confidenceStyle(c: string) {
     text: "text-amber-200",
     stroke: "stroke-amber-400",
     Icon: ShieldAlert,
-    pValue: "p ≈ 0.05",
   };
 }
 
@@ -68,6 +75,10 @@ export function MetricsBar({ impact, runId, derived }: MetricsBarProps) {
 
   const conf = confidenceStyle(impact.confidence);
   const ConfIcon = conf.Icon;
+  const reportedPValue =
+    typeof impact.p_value === "number" ? `p=${impact.p_value.toPrecision(2)}` : "p unavailable";
+  const methodLabel = impact.method || "estimator unavailable";
+  const rowCount = typeof impact.n_rows === "number" ? impact.n_rows : derived.trajectories;
 
   // Position of ATE on a -1..+1 scale (clamped). Used to render the marker.
   const atePos = Math.max(-1, Math.min(1, ate));
@@ -141,8 +152,8 @@ export function MetricsBar({ impact, runId, derived }: MetricsBarProps) {
               </span>
             </span>
             <span>
-              doubly-robust IPW · n=
-              <span className="text-foreground/80 tabular-nums">{derived.trajectories}</span>
+              {methodLabel} · n=
+              <span className="text-foreground/80 tabular-nums">{rowCount}</span>
             </span>
           </div>
         </div>
@@ -201,7 +212,7 @@ export function MetricsBar({ impact, runId, derived }: MetricsBarProps) {
                 {conf.label}
               </span>
             </div>
-            <span className="font-mono text-[10px] text-muted-foreground/80">{conf.pValue}</span>
+            <span className="font-mono text-[10px] text-muted-foreground/80">{reportedPValue}</span>
             <span className="font-mono text-[10px] text-muted-foreground/60">
               ±{(derived.ci.halfWidth * 100).toFixed(1)}pp half-width
             </span>
@@ -287,8 +298,8 @@ export function MetricsBar({ impact, runId, derived }: MetricsBarProps) {
             </span>
           </span>
           <span className="flex items-center gap-1.5">
-            trajectories{" "}
-            <span className="text-foreground/80 tabular-nums">{derived.trajectories}</span>
+            rows{" "}
+            <span className="text-foreground/80 tabular-nums">{rowCount}</span>
           </span>
         </div>
       </article>

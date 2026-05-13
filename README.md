@@ -1,73 +1,137 @@
-# HiveMind: Causal Digital Twin Engine
+# HiveMind
 
-**A self-orchestrating, evolutionary multi-agent system for spatiotemporal causal mapping and strategic threat modeling.**
+**An evidence-backed causal reasoning engine for cyber operations.**
 
-HiveMind has systematically evolved from a foundational multi-agent map-reduce concept into an advanced **Causal Digital Twin**. Using recursive architecture, it explores complex possibility spaces by spawning networks of AI agents. These agents analyze deeply dimensional threat vectors, which are then mathematically synthesized into Causal Directed Acyclic Graphs (DAGs) and structurally verified using rigorous computational math.
+HiveMind turns a messy incident prompt into a structured investigation: agents
+decompose the problem, write decision memos, propose a causal graph, compile
+external evidence into observations, and only then estimate intervention impact
+with DoWhy and statsmodels.
 
----
+The important design choice is simple:
 
-## Why HiveMind?
-
-Modern strategic problems—especially in cybersecurity, red-teaming, or system design—are:
-* **High-dimensional & Non-linear**: Hidden interactions obscure causality.
-* **Too intricate for exhaustive human reasoning**: Human analysts hit cognitive limits when spanning global supply chains and insider threats simultaneously.
-
-HiveMind approaches these problems not by asking an LLM for an answer, but by orchestrating an **Autonomous Investigation Cluster** that builds a verifiable structural model of the attack fabric.
+> The LLM proposes hypotheses. Evidence decides whether an ATE is allowed to
+> exist.
 
 ---
 
-## Core Capabilities
+## What Makes This Different
 
-* **Recursive LangGraph Orchestration**: Utilizes the LangGraph `Send` API to dynamically spin up execution branches. The system starts at a `Grand Orchestrator`, delegates to specialized `Parent Agents`, and cascades into parallelized `Child Agents` that synthesize highly localized vectors.
-* **Causal Inference Engine**: Bypasses simple LLM assumptions by embedding mathematical causality. Agents design interactive graph networks alongside simulated data, which is subsequently processed by the `DoWhy` library to execute the 4-step structural equation pipeline: **Model, Identify, Estimate, and Refute**.
-* **LLM Graph Hallucination Sanitization**: Built-in state-processing sanitization algorithms automatically patch missing spatial definitions or mapping syntax errors from the LLM, maintaining geometric and mathematical stability.
-* **Interactive Intelligence**: Embedded `streamlit-agraph` integration visually projects the compiled graph in real-time within the browser.
-* **Air-gapped Agnostic Docker Base**: Fully disconnected from local environment package dependencies to eliminate complex multi-array Python math/C-extension library conflicts.
+Most agent demos stop at a confident narrative. HiveMind is built to survive the
+obvious engineering objection: "Where did the data come from?"
+
+| Layer | What it does | Guardrail |
+| --- | --- | --- |
+| Orchestrator | Splits an incident into 2-3 investigation tracks | Standardized tier scoring |
+| Parent agents | Spawn focused child investigators | Explicit objectives per branch |
+| Child agents | Produce decision memos | Assumptions, risks, evidence needs |
+| Evaluator | Ranks memos against task priorities | Structured scores and final recommendation |
+| Causal architect | Proposes a DAG and measurement plan | No dataset-row generation |
+| Evidence compiler | Converts SIEM/CVE/report records into numeric rows | Provenance, missingness, balance gates |
+| Estimator | Runs DoWhy, statsmodels, and refuters | ATE withheld when data is weak |
 
 ---
 
-## Architectural Data Flow
+## Architecture
 
 ```mermaid
-graph TD
-    A[Grand Orchestrator] -->|Metacognitive Bounding| B(Parent Agent: Network)
-    A -->|Metacognitive Bounding| C(Parent Agent: Supply Chain)
-    A -->|Metacognitive Bounding| D(Parent Agent: Insider Threat)
-    
-    B --> E[Child Exploit Mapper]
-    B --> F[Child Telemetry Analyser]
-    C --> G[Child Vendor Trust Verifier]
-    
-    E & F & G --> H[Causal Synthesis Node]
-    
-    H -->|Synthesized DF & Graph| I{DoWhy Causal Engine}
-    I -->|Step 1: Model DAG| J[Backdoor Identification]
-    J -->|Step 2: Linear Regression| K[Effect Estimation]
-    K -->|Step 3: Placebo / Random Cause| L[Robustness Refutation]
-    
-    L --> M[Streamlit Agraph Dashboard]
+flowchart LR
+    A["Incident prompt"] --> B["Grand Orchestrator"]
+    B --> C["Parent Agents"]
+    C --> D["Child Agents"]
+    D --> E["Evaluator"]
+    E --> F["Causal Hypothesis Architect"]
+    F --> G["Measurement Plan + DAG"]
+    H["SIEM / CVE / Incident Exports"] --> I["Evidence Normalizers"]
+    I --> J["Evidence Dataset Compiler"]
+    G --> J
+    J --> K{"Data gates pass?"}
+    K -->|No| L["Withhold ATE"]
+    K -->|Yes| M["DoWhy identification + estimation"]
+    M --> N["Statsmodels p-value + CI"]
+    M --> O["Refuters"]
+    N --> P["Run artifact"]
+    O --> P
+    L --> P
 ```
 
 ---
 
-## Key Components
+## Answering The Hard Questions
 
-### 1. Hierarchical LangGraph State
-The entire ecosystem rests on typed Pydantic payloads acting as network schemas. Rather than a flat linear pipeline, execution traverses a deeply nested Direct Acyclic Graph (DAG) state capable of carrying isolated analytical memories.
+### 1. Where does DoWhy data come from?
 
-### 2. Metacognitive Threat Analysts
-Instead of generic agents, HiveMind invokes "SOC-Grade" structured metacognition. Agents write `DecisionMemos` actively detailing blind-spots, strategy, and explicit cognitive reasoning to defend their threat assessments.
+DoWhy runs on the dataframe produced by `dataset_compiler.py`. That dataframe is
+compiled from normalized `EvidenceRecord` objects, not from LLM-generated rows.
+Each compiled row keeps source provenance:
 
-### 3. DoWhy Mathematical Engine
-HiveMind treats the LLM purely as a **Causal Architect**. The LLM constructs structural equations and simulated noise structures. This allows standard Pearlian computational math (via `statsmodels`, `scipy`, and `networkx`) to strip away correlation and isolate pure causal Treatment Effects.
+- `source_type`: `siem`, `edr`, `cve`, `incident_report`, `asset_inventory`, or
+  `manual`
+- `source_name`: concrete export/feed/index name
+- `raw_ref`: pointer to the original record
+- `asset_id` and `observed_at`: row-level traceability
+
+### 2. Is the LLM confirming its own story?
+
+No. The LLM is restricted to graph and measurement-plan generation. Synthetic
+records are skipped by the compiler and cannot pass the empirical-data gate.
+If real evidence is missing, the estimator returns:
+
+```text
+method = withheld:data_quality_gates
+ate = null
+p_value = null
+```
+
+### 3. Is this connected to real data sources?
+
+The API now supports export-based normalization for:
+
+- `POST /normalize/sentinel` for Microsoft Sentinel or SIEM-like rows
+- `POST /normalize/cve` for NVD/CVE feed records
+- `POST /normalize/incidents` for incident report exports
+
+The current demo does not require live tenant credentials. It accepts exported
+records, normalizes them into the shared evidence schema, and sends them through
+the same causal compiler used by `/estimate` and `/run`.
+
+### 4. How many rows does DoWhy need, and why 50?
+
+HiveMind treats 50 complete treatment/outcome observations as a minimum smoke
+gate, not as a universal statistical guarantee. The estimator also requires at
+least 10 treated and 10 control rows, observed variation in treatment/outcome,
+and acceptable covariate missingness. The report warns that 200+ rows are
+recommended for a more stable estimate.
+
+Below the gate, ATE is withheld. Above the gate, the report still exposes
+`n_rows`, treatment/control counts, missingness, warnings, p-value, confidence
+interval, and refuter results so reviewers can judge strength.
+
+### 5. Where is the p-value computed?
+
+The p-value is computed in `estimators.py` with `statsmodels.OLS` against the
+treatment coefficient, using the same treatment/outcome/adjustment set that
+DoWhy estimates. It is not hard-coded.
+
+### 6. Is there a standardized metric for agent tiers?
+
+Yes. `benchmarking.py` emits deterministic tier metrics for:
+
+- orchestrator decomposition
+- parent-agent child task quality
+- child memo completeness
+- evaluator output shape
+- causal graph validity
+- estimator readiness
+
+The final artifact includes `agent_tier_metrics.overall_score` and per-tier
+observed signals.
 
 ---
 
-## How to Run
+## Run It
 
-To bypass all mathematical C-extension library conflicts associated with heavy scientific computing environments, HiveMind has been tightly containerized in Docker.
+Create a root `.env` file:
 
-1. First, create your `.env` file at the root:
 ```env
 AZURE_OPENAI_ENDPOINT=https://your-endpoint.openai.azure.com/
 AZURE_OPENAI_API_KEY=your-api-key
@@ -75,32 +139,175 @@ AZURE_OPENAI_DEPLOYMENT=gpt-4o
 AZURE_OPENAI_API_VERSION=2024-08-01-preview
 ```
 
-2. Run the secure cluster:
+Start the full stack:
+
 ```bash
 docker-compose up --build
 ```
-(Note: The first time you run this, it may take a while to download the base image and dependencies.)
 
-(Note: --remove-orphans is used to remove any orphaned containers. So you can run: docker-compose up --build --remove-orphans  ,if ran more than once to start the cluster without any orphaned containers.)
+Open:
 
-Then access:
-- Application: http://localhost:8080
-- API Backend for testing: http://localhost:8000
+- Frontend: <http://localhost:8080>
+- API docs: <http://localhost:8000/docs>
+- Health check: <http://localhost:8000/health>
 
-(Note: If you get a "port already in use" error, you can change the ports in the `docker-compose.yml` file.)
+Stop it:
 
-## Notes
-- The Frontend runs the Lovable React app.
-- The API is the Python engine running the DoWhy and LangGraph logic.
+```bash
+docker-compose down
+```
 
 ---
 
-## Status
-HiveMind is an active research and engineering project originally conceived for the advanced systemic bounding of cyber landscapes.
+## Fast Demo Without LLM Tokens
+
+Run the deterministic evidence-backed demo:
+
+```bash
+curl http://localhost:8000/demo/estimate
+```
+
+That endpoint uses a fixed SIEM-style evidence fixture for:
+
+- treatment: `Patch_Applied`
+- outcome: `Lateral_Movement`
+- confounder: `Asset_Criticality`
+
+It exercises the same compiler, data gates, DoWhy estimator, statsmodels
+p-value/CI reporting, and refuters used by real evidence.
+
+---
+
+## Estimate From Your Own Evidence
+
+```bash
+curl -X POST http://localhost:8000/estimate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "graph": {
+      "nodes": [
+        {"id": "Patch_Applied", "label": "Patch Applied", "description": "Asset patched before the observation window"},
+        {"id": "Lateral_Movement", "label": "Lateral Movement", "description": "Lateral movement observed after exposure"},
+        {"id": "Asset_Criticality", "label": "Asset Criticality", "description": "High-value asset tier"}
+      ],
+      "edges": [
+        {"source": "Asset_Criticality", "target": "Patch_Applied", "relationship": "Critical assets are prioritized"},
+        {"source": "Asset_Criticality", "target": "Lateral_Movement", "relationship": "Critical assets attract more movement"},
+        {"source": "Patch_Applied", "target": "Lateral_Movement", "relationship": "Patching reduces exploitability"}
+      ],
+      "treatment_variable": "Patch_Applied",
+      "outcome_variable": "Lateral_Movement",
+      "candidate_confounders": ["Asset_Criticality"]
+    },
+    "evidence_records": [
+      {
+        "source_type": "siem",
+        "source_name": "sentinel-kql-export",
+        "observed_at": "2026-05-12T10:00:00Z",
+        "asset_id": "host-001",
+        "raw_ref": "row-001",
+        "extracted_fields": {
+          "Patch_Applied": 1,
+          "Lateral_Movement": 0,
+          "Asset_Criticality": 1
+        }
+      }
+    ]
+  }'
+```
+
+With only one row, this returns an explicit data-quality refusal instead of a
+fake causal result. That is the point.
+
+---
+
+## Normalize Real Exports
+
+Normalize Sentinel/SIEM rows:
+
+```bash
+curl -X POST http://localhost:8000/normalize/sentinel \
+  -H "Content-Type: application/json" \
+  -d '{"source_name":"sentinel-prod-kql","records":[{"TimeGenerated":"2026-05-12T10:00:00Z","Computer":"host-001","AlertName":"Lateral movement detected","Patch_Applied":1,"Lateral_Movement":0,"Asset_Criticality":1}]}'
+```
+
+Normalize CVE feed records:
+
+```bash
+curl -X POST http://localhost:8000/normalize/cve \
+  -H "Content-Type: application/json" \
+  -d '{"records":[{"id":"CVE-2026-0001","published":"2026-05-01","baseScore":9.1,"descriptions":[{"lang":"en","value":"Example vulnerable service."}]}]}'
+```
+
+Normalize incident report rows:
+
+```bash
+curl -X POST http://localhost:8000/normalize/incidents \
+  -H "Content-Type: application/json" \
+  -d '{"records":[{"incident_id":"INC-42","created_at":"2026-05-12","asset_id":"host-001","severity":"high","summary":"Credential misuse followed by lateral movement."}]}'
+```
+
+---
+
+## Backend Files
+
+| File | Role |
+| --- | --- |
+| `api.py` | FastAPI surface: `/run`, `/estimate`, `/demo/estimate`, normalizers |
+| `agents.py` | Orchestrator, parent-agent, and child-agent LangGraph nodes |
+| `evaluator.py` | Adaptive structured evaluator for decision memos |
+| `causal.py` | Causal hypothesis generation and estimator node wiring |
+| `dataset_compiler.py` | Evidence-to-dataframe compiler and statistical gates |
+| `estimators.py` | DoWhy estimation, statsmodels p-values/CIs, refuters |
+| `evidence_adapters.py` | Sentinel/CVE/incident export normalization |
+| `benchmarking.py` | Deterministic tier metrics for the agent pipeline |
+| `schema.py` | Pydantic and LangGraph state contracts |
+| `engine.py` | End-to-end run orchestration and artifact persistence |
+| `demo_fixtures.py` | Deterministic evidence-backed smoke-test fixture |
+| `main.py` | Legacy Streamlit inspection UI |
+
+---
+
+## Engineering Standards
+
+- Docker-first execution via `docker-compose up --build`
+- Pinned Python dependencies for reproducible builds
+- `.dockerignore` files for smaller, safer build contexts
+- PEP8-compatible formatting targets in `pyproject.toml`
+- CORS restricted to local demo origins by default
+- ATE/p-value withheld when evidence gates fail
+- Run artifacts persisted under `data/`
+
+---
+
+## Roadmap
+
+- Authenticated Microsoft Sentinel connector
+- Splunk HEC/search export connector
+- NVD API puller with scheduled CVE refresh
+- Larger benchmark suite with golden incident prompts
+- Streaming execution telemetry from LangGraph to the React UI
+- Backtesting against historical incident retrospectives
+
+---
+
+## Future Enhancements
+
+- **Production-Grade MCP Intelligence Fabric:** Build a distributed MCP client layer capable of dynamically discovering, authenticating, and routing across agentic topics within the swarm. Agents will interface with specialized cyber-oriented MCP servers providing contextual memory, threat intelligence enrichment, tool orchestration, policy enforcement, and reasoning augmentation. The long-term goal is a zero-trust, latency-aware intelligence plane for autonomous multi-agent coordination.
+- **Deep Hierarchical Agent Expansion:** Introduce additional recursive child-agent layers with adaptive spawning policies driven by task complexity, uncertainty, and resource availability. Runtime efficiency will be improved through asynchronous execution pipelines, speculative parallel reasoning, and distributed workload scheduling across heterogeneous compute environments.
+- **Kafka-Native Agent Communication Backbone:** Implement a dedicated high-throughput Kafka event bus to support scalable inter-agent communication, artifact propagation, and state synchronization across the swarm. Agents will publish structured semantic artifacts representing hypotheses, observations, plans, and intermediate reasoning outputs, enabling emergent collaboration patterns and distributed cognition across the hierarchy.
+- **5D Spatiotemporal Knowledge Graph Engine:** Develop a real-time 5D spatiotemporal graph system continuously updated from Kafka event streams. The graph will model entities, relationships, temporal evolution, and contextual state transitions across the swarm. Dynamically generated DAGs and causal inference pipelines will emerge directly from this evolving graph substrate, enabling temporally-aware reasoning, anomaly tracing, and adaptive decision intelligence.
+- **Evolutionary Agent Optimization Framework:** Integrate a steady-state evolutionary algorithm for autonomous optimization of agent spawning strategies, behavioral policies, and orchestration patterns. Agents will inherit successful traits through mutation and crossover mechanisms, allowing the swarm to continuously evolve more efficient reasoning pathways, coordination structures, and task-specialized behaviors over time.
+- **Federated Multi-Swarm Coordination:** Extend the architecture toward federated swarm interoperability, where independent agent clusters can exchange semantic state, negotiate objectives, and collaboratively solve large-scale problems while preserving localized autonomy and fault isolation.
+- **Adaptive Trust, Reputation, and Reliability Layer:** Implement a reputation-driven trust framework inspired by distributed systems and service mesh architectures. Agents, tools, and MCP servers will be continuously evaluated using latency, correctness, consistency, and semantic reliability metrics, enabling dynamic routing, circuit-breaking, and failure containment across the orchestration graph.
+- **Real-Time Causal Reasoning Infrastructure:** Expand the DAG generation pipeline into a streaming causal inference engine capable of constructing and updating probabilistic causal models from live swarm telemetry. This will enable agents to move beyond correlation-based reasoning toward intervention-aware strategic planning and root-cause analysis.
+- **Autonomous Resource Governance:** Introduce reinforcement-learning-driven resource allocation for GPU scheduling, agent quotas, memory utilization, and orchestration depth. The system will dynamically balance exploration vs. exploitation while preventing uncontrolled swarm expansion or infrastructure saturation.
+- **Persistent Semantic Memory and Retrieval Layer:** Develop a hybrid long-term memory architecture combining vector retrieval, graph traversal, and temporal indexing. Agents will maintain persistent contextual awareness across tasks, enabling longitudinal reasoning, adaptive learning, and higher-order strategic coordination over time.
+
+---
 
 ## License
-MIT License
 
----
+MIT
 
-If you are interested in collaborating, extending, or stress-testing HiveMind, open an issue or reach out to Darsh Garg (darsh.garg@gmail.com)
+To contribute, contact Darsh Garg at darsh.garg@gmail.com

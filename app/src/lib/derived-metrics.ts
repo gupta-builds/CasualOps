@@ -132,6 +132,7 @@ function confidenceToScore(c: string): number {
   if (lc === "high") return 0.92;
   if (lc === "medium" || lc === "med") return 0.74;
   if (lc === "low") return 0.41;
+  if (lc === "insufficient_data") return 0.22;
   return 0.6;
 }
 
@@ -142,16 +143,23 @@ export function computeDerivedMetrics(run: RunResponse): DerivedMetrics {
   const impact: Impact = run.impact ?? { ate: 0, confidence: "unknown" };
 
   const confidenceScore = confidenceToScore(impact.confidence);
+  const hasReportedCi = typeof impact.ci_low === "number" && typeof impact.ci_high === "number";
   const noise = ((hash32(run.run_id || "x") % 1000) / 1000 - 0.5) * 0.04;
   const halfWidth = (1 - confidenceScore) * 0.28 + 0.06 + noise;
-  const ci = {
-    low: impact.ate - halfWidth,
-    high: impact.ate + halfWidth,
-    halfWidth: Math.abs(halfWidth),
-  };
+  const ci = hasReportedCi
+    ? {
+        low: impact.ci_low as number,
+        high: impact.ci_high as number,
+        halfWidth: Math.abs(((impact.ci_high as number) - (impact.ci_low as number)) / 2),
+      }
+    : {
+        low: impact.ate - halfWidth,
+        high: impact.ate + halfWidth,
+        halfWidth: Math.abs(halfWidth),
+      };
 
   const seed = hash32(run.run_id || "x");
-  const trajectories = 96 + (seed % 96);
+  const trajectories = impact.n_rows && impact.n_rows > 0 ? impact.n_rows : 96 + (seed % 96);
   const durationMs = 1200 + (seed % 1800);
   const deltaPct = impact.ate * 100;
 
