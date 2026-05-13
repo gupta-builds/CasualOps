@@ -50,6 +50,11 @@ evaluator_prompt = ChatPromptTemplate.from_messages([
 
 structured_evaluator_llm = llm.with_structured_output(RankedStrategies)
 
+chain = evaluator_prompt | structured_evaluator_llm
+
+
+
+
 def evaluate_memos_node(state: GraphState):
     """LangGraph node to evaluate and rank all collected memos."""
     print("-> Evaluator running...")
@@ -65,13 +70,21 @@ def evaluate_memos_node(state: GraphState):
         memos_text += f"Assumptions: {', '.join(memo.assumptions)}\n"
         memos_text += f"Risks: {', '.join(memo.risks)}\n"
         memos_text += f"Second Order Effects: {', '.join(memo.second_order_effects)}\n\n"
-        
-    chain = evaluator_prompt | structured_evaluator_llm
     
-    result = chain.invoke({
-        "task_description": state["task_description"],
-        "memos_text": memos_text
-    })
+        
+    # chain = evaluator_prompt | structured_evaluator_llm
+    # the reason i put the chain variable above is because we dont need to rebuild the chain for every call.
+    # the reason why is so we dont create a throwaway object on every single invocation for no reason.
+
+
+    try:
+        result = chain.invoke({
+            "task_description": state.get("task_description", ""),
+            "memos_text": memos_text
+        })
+    except Exception as e:
+        print(f'Evaluator LLM call failed: {e}')
+        return {"ranked_strategies" : [], "error": str(e)}
     
     # Store the result in a serialized dict for the state
     ranked_strategies = result.model_dump()
