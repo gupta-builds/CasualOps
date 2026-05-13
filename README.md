@@ -126,6 +126,10 @@ Yes. `benchmarking.py` emits deterministic tier metrics for:
 The final artifact includes `agent_tier_metrics.overall_score` and per-tier
 observed signals.
 
+### 7. How does the LLM know which confounders to suggest for the DAG?
+
+The Causal Architect performs a Semantic Intersection between the incident prompt and the available telemetry schema. It proposes candidate confounders (e.g., Asset_Criticality) which are then validated by the Evidence Normalizer. If the variable exists in the physical logs, it stays; if it's a hallucination, the Gatekeeper prunes the edge before estimation.
+
 ---
 
 ## Run It
@@ -295,7 +299,7 @@ curl -X POST http://localhost:8000/normalize/incidents \
 
 - **Production-Grade MCP Intelligence Fabric:** Build a distributed MCP client layer capable of dynamically discovering, authenticating, and routing across agentic topics within the swarm. Agents will interface with specialized cyber-oriented MCP servers providing contextual memory, threat intelligence enrichment, tool orchestration, policy enforcement, and reasoning augmentation. The long-term goal is a zero-trust, latency-aware intelligence plane for autonomous multi-agent coordination.
 - **Deep Hierarchical Agent Expansion:** Introduce additional recursive child-agent layers with adaptive spawning policies driven by task complexity, uncertainty, and resource availability. Runtime efficiency will be improved through asynchronous execution pipelines, speculative parallel reasoning, and distributed workload scheduling across heterogeneous compute environments.
-- **Kafka-Native Agent Communication Backbone:** Implement a dedicated high-throughput Kafka event bus to support scalable inter-agent communication, artifact propagation, and state synchronization across the swarm. Agents will publish structured semantic artifacts representing hypotheses, observations, plans, and intermediate reasoning outputs, enabling emergent collaboration patterns and distributed cognition across the hierarchy.
+- **Kafka-Native Agent Communication Backbone:** Implement a dedicated high-throughput Kafka event bus to support scalable inter-agent communication, artifact propagation, and state synchronization across the swarm. Agents will publish structured semantic artifacts representing hypotheses, observations, plans, and intermediate reasoning outputs, enabling emergent collaboration patterns and distributed cognition across the hierarchy. As we spawn more child agents, a local LangGraph state will eventually become too heavy; offloading the "Semantic Artifacts" to a message bus is the only way to achieve "Evolutionary Compute".
 - **5D Spatiotemporal Knowledge Graph Engine:** Develop a real-time 5D spatiotemporal graph system continuously updated from Kafka event streams. The graph will model entities, relationships, temporal evolution, and contextual state transitions across the swarm. Dynamically generated DAGs and causal inference pipelines will emerge directly from this evolving graph substrate, enabling temporally-aware reasoning, anomaly tracing, and adaptive decision intelligence.
 - **Evolutionary Agent Optimization Framework:** Integrate a steady-state evolutionary algorithm for autonomous optimization of agent spawning strategies, behavioral policies, and orchestration patterns. Agents will inherit successful traits through mutation and crossover mechanisms, allowing the swarm to continuously evolve more efficient reasoning pathways, coordination structures, and task-specialized behaviors over time.
 - **Federated Multi-Swarm Coordination:** Extend the architecture toward federated swarm interoperability, where independent agent clusters can exchange semantic state, negotiate objectives, and collaboratively solve large-scale problems while preserving localized autonomy and fault isolation.
