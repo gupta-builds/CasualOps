@@ -110,7 +110,8 @@ export function PresenterMode({ open, onClose, result, derived, task }: Presente
                 </span>
               </span>
               <span>
-                doubly-robust IPW · n={derived.trajectories} trajectories
+                {impact.method || "estimator unavailable"} · n=
+                {impact.n_rows ?? derived.trajectories} rows
               </span>
             </div>
           </article>

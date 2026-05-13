@@ -1,0 +1,16 @@
+.git
+.gitignore
+.DS_Store
+.env
+app/.env
+app/node_modules
+app/.tanstack
+app/dist
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+data
+venv
+.venv

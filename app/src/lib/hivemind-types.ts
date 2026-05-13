@@ -25,13 +25,24 @@ export interface CausalGraph {
 export interface Impact {
   ate: number;
   confidence: string;
+  p_value?: number | null;
+  ci_low?: number | null;
+  ci_high?: number | null;
+  n_rows?: number;
+  method?: string;
 }
 
 export interface RunResponse {
   run_id: string;
   strategies: Strategy[];
+  ranked_strategies?: unknown[];
+  final_recommendation?: string | null;
+  evaluator_error?: string | null;
   causal_graph: CausalGraph;
   impact: Impact;
+  causal_estimate_report?: unknown;
+  causal_dataset_profile?: unknown;
+  agent_tier_metrics?: unknown;
 }
 
 export interface HistoryEntry {

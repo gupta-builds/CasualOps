@@ -50,7 +50,7 @@ export const Route = createFileRoute("/run")({
           return Response.json(buildRunResponse(parsed.data.task_description), {
             headers: {
               ...CORS_HEADERS,
-              "X-HiveMind-Backend": "internal-run-engine",
+              "X-HiveMind-Backend": "internal-graph-only-engine",
             },
           });
         } catch (error) {
@@ -74,15 +74,19 @@ function buildRunResponse(taskDescription: string): RunResponse {
   const fields = parseFields(taskDescription);
   const causal_graph = buildGraph(taskDescription, techniques, fields);
   const strategies = buildStrategies(taskDescription, techniques, fields, rand);
-  const confidence = confidenceLabel(taskDescription, techniques.length, causal_graph.edges.length);
 
   return {
     run_id: `hm-${Date.now().toString(36)}-${seed.toString(36)}`,
     strategies,
     causal_graph,
     impact: {
-      ate: Number((0.38 + Math.min(0.42, techniques.length * 0.035) + rand() * 0.08).toFixed(2)),
-      confidence,
+      ate: 0,
+      confidence: "insufficient_data",
+      p_value: null,
+      ci_low: null,
+      ci_high: null,
+      n_rows: 0,
+      method: "frontend.graph_only.no_empirical_estimate",
     },
   };
 }
@@ -270,16 +274,6 @@ function relationshipFor(tactic: TacticId): string {
     impact: "materializes operational harm",
   };
   return labels[tactic] ?? `advances ${tacticById(tactic).label.toLowerCase()}`;
-}
-
-function confidenceLabel(text: string, techniqueCount: number, edgeCount: number): string {
-  const fieldSignals = ["Asset / Target", "Threat Actor", "Attack Objective", "Entry Vector", "Environment", "Detection Gaps"].filter(
-    (label) => text.toLowerCase().includes(label.toLowerCase()),
-  ).length;
-  const score = fieldSignals + techniqueCount + edgeCount * 0.2;
-  if (score >= 13) return "high";
-  if (score >= 7) return "medium";
-  return "low";
 }
 
 function compactLabel(value: string): string {

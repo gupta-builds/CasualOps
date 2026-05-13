@@ -28,13 +28,24 @@ export const CausalGraphSchema = z.object({
 export const ImpactSchema = z.object({
   ate: z.number().finite(),
   confidence: z.string().min(1),
+  p_value: z.number().finite().nullable().optional(),
+  ci_low: z.number().finite().nullable().optional(),
+  ci_high: z.number().finite().nullable().optional(),
+  n_rows: z.number().int().nonnegative().optional(),
+  method: z.string().optional(),
 });
 
 export const RunResponseSchema = z.object({
   run_id: z.string().min(1),
   strategies: z.array(StrategySchema),
+  ranked_strategies: z.array(z.unknown()).optional(),
+  final_recommendation: z.string().nullable().optional(),
+  evaluator_error: z.string().nullable().optional(),
   causal_graph: CausalGraphSchema,
   impact: ImpactSchema,
+  causal_estimate_report: z.unknown().optional(),
+  causal_dataset_profile: z.unknown().optional(),
+  agent_tier_metrics: z.unknown().optional(),
 });
 
 export interface SchemaIssue {
