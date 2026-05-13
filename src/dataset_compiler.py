@@ -29,7 +29,7 @@ MIN_TREATMENT_GROUP_ROWS = 10
 def clean_variable(value: str) -> str:
     """Normalize causal variable names for pandas, GML, and DoWhy."""
 
-    return str(value).strip().replace(" ", "_").replace("-", "_")
+    return value.strip().replace(" ", "_").replace("-", "_")
 
 
 @dataclass
@@ -87,7 +87,7 @@ def _variable_lookup(record: EvidenceRecord, variable: str) -> float | None:
         clean_variable(variable).lower(),
     }
 
-    lowered_fields = {str(k).lower(): v for k, v in fields.items()}
+    lowered_fields = {k.lower(): v for k, v in fields.items()}
     for key in candidates:
         if key in fields:
             return _coerce_float(fields[key])
@@ -191,7 +191,7 @@ def compile_evidence_dataset(
         else 0
     )
     missingness = {
-        col: float(df[col].isna().mean()) if col in df and len(df) else 1.0
+        col: float(model_df[col].isna().mean()) if col in model_df and len(model_df) else 1.0
         for col in columns
     }
     warnings = _profile_warnings(
@@ -218,7 +218,7 @@ def compile_evidence_dataset(
 
     profile = CausalDatasetProfile(
         data_mode=data_mode,
-        n_rows=int(len(model_df)),
+        n_rows=len(model_df),
         columns=columns,
         treatment=treatment,
         outcome=outcome,

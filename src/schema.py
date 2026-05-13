@@ -14,10 +14,9 @@ falling back to LLM-generated rows.
 from __future__ import annotations
 
 import operator
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, TypedDict
 
 from pydantic import BaseModel, Field
-from typing_extensions import TypedDict
 
 
 # ---------------------------------------------------------------------------

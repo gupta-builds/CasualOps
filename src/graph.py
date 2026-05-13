@@ -66,7 +66,7 @@ def conditional_refutation_check(
 
     estimate_report = state.get("causal_estimate_report") or {}
     method = str(estimate_report.get("method", ""))
-    attempts = int(state.get("causal_refutation_attempts", 0))
+    attempts = state.get("causal_refutation_attempts", 0)
     if state.get("causal_refutation_passed", False) or method.startswith("withheld:"):
         return "end"
     if attempts >= 2:
