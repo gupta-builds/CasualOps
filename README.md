@@ -312,8 +312,6 @@ curl -X POST http://localhost:8000/normalize/incidents \
 
 ## License
 
-MIT
-
 To contribute, contact Darsh Garg at darsh.garg@gmail.com
 
 https://medium.com/@darsh.garg/the-epistemic-crisis-of-ai-agents-and-how-i-built-a-swarm-that-constrains-its-own-uncertainty-22300d8e6c55
