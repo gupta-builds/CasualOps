@@ -1,5 +1,11 @@
 import { FileDown, History, MoreHorizontal, RotateCw, Trash2 } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -103,7 +109,11 @@ export function RunHistoryDrawer({
             )}
           </div>
           <SheetDescription className="text-xs text-muted-foreground">
-            Stored locally in this browser. Press <kbd className="rounded border border-white/10 bg-white/5 px-1 font-mono text-[10px]">H</kbd> to toggle.
+            Stored locally in this browser. Press{" "}
+            <kbd className="rounded border border-white/10 bg-white/5 px-1 font-mono text-[10px]">
+              H
+            </kbd>{" "}
+            to toggle.
           </SheetDescription>
         </SheetHeader>
 

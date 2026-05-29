@@ -15,9 +15,7 @@ export function StrategiesGrid({ ranked }: StrategiesGridProps) {
           <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-foreground">
             Recommended Strategies
           </h2>
-          <span className="font-mono text-xs text-muted-foreground">
-            ({ranked.length})
-          </span>
+          <span className="font-mono text-xs text-muted-foreground">({ranked.length})</span>
         </div>
         <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70">
           ranked by expected utility · EU = (1−risk) × (0.6+0.4·speed) / cost
@@ -31,11 +29,7 @@ export function StrategiesGrid({ ranked }: StrategiesGridProps) {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {ranked.map((s) => (
-            <StrategyCard
-              key={`${s.strategy.title}-${s.index}`}
-              scored={s}
-              isTop={s.rank === 1}
-            />
+            <StrategyCard key={`${s.strategy.title}-${s.index}`} scored={s} isTop={s.rank === 1} />
           ))}
         </div>
       )}

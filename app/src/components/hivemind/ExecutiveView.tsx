@@ -63,7 +63,9 @@ export function ExecutiveView({ fields, ttps, result, derived, observability }: 
   // Recommended action: prefer engine top strategy if available
   const topStrategy = derived?.ranked?.[0]?.strategy;
   const recommendedAction =
-    topStrategy?.summary ?? topStrategy?.title ?? "Activate containment playbook against highest-EU strategy";
+    topStrategy?.summary ??
+    topStrategy?.title ??
+    "Activate containment playbook against highest-EU strategy";
 
   return (
     <div className="space-y-5">
@@ -176,12 +178,16 @@ export function ExecutiveView({ fields, ttps, result, derived, observability }: 
             Recommended Action
           </div>
           <div className="mb-3 space-y-2">
-            {recommendedAction.split('. ')
-              .filter(s => s.trim().length > 0)
+            {recommendedAction
+              .split(". ")
+              .filter((s) => s.trim().length > 0)
               .map((sentence, idx) => {
-                const text = sentence.trim().endsWith('.') ? sentence : sentence + '.';
+                const text = sentence.trim().endsWith(".") ? sentence : sentence + ".";
                 return (
-                  <div key={idx} className="flex items-start gap-2 text-sm leading-relaxed text-foreground">
+                  <div
+                    key={idx}
+                    className="flex items-start gap-2 text-sm leading-relaxed text-foreground"
+                  >
                     <span className="text-[color:var(--neon-cyan)] select-none mt-0.5">•</span>
                     <span>{text}</span>
                   </div>
@@ -210,7 +216,8 @@ export function ExecutiveView({ fields, ttps, result, derived, observability }: 
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span className="leading-snug">
             Defensive posture has <strong>{chain.blindSpots}</strong> uncovered chain step
-            {chain.blindSpots > 1 ? "s" : ""}. Recommend addressing detection gaps before next exercise.
+            {chain.blindSpots > 1 ? "s" : ""}. Recommend addressing detection gaps before next
+            exercise.
           </span>
         </div>
       )}
@@ -263,7 +270,8 @@ function Heatmap({ likelihood, impact }: { likelihood: number; impact: number })
                 className={cn(
                   "relative flex aspect-[2/1] items-center justify-center rounded border border-white/5 font-mono text-[10px] tabular-nums",
                   tone,
-                  active && "ring-2 ring-[color:var(--neon-cyan)] ring-offset-2 ring-offset-transparent",
+                  active &&
+                    "ring-2 ring-[color:var(--neon-cyan)] ring-offset-2 ring-offset-transparent",
                 )}
               >
                 <span className={active ? "text-foreground" : "text-foreground/50"}>{l * i}</span>

@@ -61,7 +61,10 @@ export function StrategyCard({ scored, isTop }: StrategyCardProps) {
       )}
     >
       {isTop && (
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px shimmer-bar" aria-hidden />
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px shimmer-bar"
+          aria-hidden
+        />
       )}
 
       <div className="flex items-start justify-between gap-3">

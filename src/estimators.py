@@ -36,7 +36,7 @@ def estimate_causal_effect(
 
     if not gates_passed:
         return CausalEstimateReport(
-            data_mode="insufficient_data",
+            data_mode=profile.data_mode,
             method="withheld:data_quality_gates",
             treatment=treatment,
             outcome=outcome,

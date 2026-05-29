@@ -204,7 +204,8 @@ export const ScenarioBuilder = forwardRef<ScenarioBuilderHandle, Props>(function
           <div className="mt-1.5 flex items-center justify-between text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1">
               <Wand2 className="h-2.5 w-2.5 text-[color:var(--neon-cyan)]/70" />
-              Heuristic decomposer running locally — no scenario data leaves the browser until you Run.
+              Heuristic decomposer running locally — no scenario data leaves the browser until you
+              Run.
             </span>
             <button
               type="button"
@@ -248,9 +249,7 @@ export const ScenarioBuilder = forwardRef<ScenarioBuilderHandle, Props>(function
                 }
                 forceOpen={forceOpenField === f.key}
                 customControl={
-                  f.key === "ttps" ? (
-                    <MitreChips selected={ttps} onChange={setTtps} />
-                  ) : undefined
+                  f.key === "ttps" ? <MitreChips selected={ttps} onChange={setTtps} /> : undefined
                 }
               />
             </div>

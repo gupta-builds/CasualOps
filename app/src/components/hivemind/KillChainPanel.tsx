@@ -136,12 +136,18 @@ export function KillChainPanel({ chain, ttpCount }: Props) {
                   <div className="mt-1.5 flex items-start gap-1.5 text-[10px] leading-snug text-muted-foreground">
                     <Crosshair className={cn("mt-0.5 h-2.5 w-2.5 shrink-0", detTone)} />
                     <span className={detTone}>
-                      {s.detected === "blind" ? "Blind: " : s.detected === "likely" ? "Detect: " : "Partial: "}
+                      {s.detected === "blind"
+                        ? "Blind: "
+                        : s.detected === "likely"
+                          ? "Detect: "
+                          : "Partial: "}
                     </span>
                     <span className="text-foreground/60">{s.detection}</span>
                   </div>
                   <div className="mt-1 flex items-center justify-between text-[9px] text-muted-foreground">
-                    <span className="font-mono uppercase tracking-wider">+{s.dwellHours}h dwell</span>
+                    <span className="font-mono uppercase tracking-wider">
+                      +{s.dwellHours}h dwell
+                    </span>
                     <span className="font-mono uppercase tracking-wider opacity-70">
                       mit: {s.technique.mitigation.split(",")[0]}
                     </span>
@@ -191,7 +197,8 @@ export function KillChainPanel({ chain, ttpCount }: Props) {
         <div className="flex items-start gap-2 rounded-md border border-rose-400/30 bg-rose-500/10 p-2 text-[10px] text-rose-200">
           <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
           <span className="leading-snug">
-            <strong>{chain.blindSpots}</strong> chain step{chain.blindSpots > 1 ? "s" : ""} likely undetected. Containment options will skew defensive.
+            <strong>{chain.blindSpots}</strong> chain step{chain.blindSpots > 1 ? "s" : ""} likely
+            undetected. Containment options will skew defensive.
           </span>
         </div>
       )}

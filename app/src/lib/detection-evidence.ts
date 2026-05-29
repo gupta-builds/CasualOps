@@ -19,47 +19,89 @@ export interface DetectionEvidence {
 
 const TACTIC_DEFAULT: Record<TacticId, DetectionEvidence> = {
   reconnaissance: {
-    confirm: ["External scan / OSINT pulls against owned assets", "Spike in WHOIS / cert transparency lookups"],
-    falsify: ["No anomalous external probing in 30d baseline", "No targeted asset enumeration in WAF logs"],
+    confirm: [
+      "External scan / OSINT pulls against owned assets",
+      "Spike in WHOIS / cert transparency lookups",
+    ],
+    falsify: [
+      "No anomalous external probing in 30d baseline",
+      "No targeted asset enumeration in WAF logs",
+    ],
     source: "Edge / WAF / threat-intel feeds",
   },
   "resource-development": {
     confirm: ["Newly-registered lookalike domains", "Attacker infra appears in TI feeds"],
-    falsify: ["No related domain registrations in passive DNS", "No matching infra in TI sharing groups"],
+    falsify: [
+      "No related domain registrations in passive DNS",
+      "No matching infra in TI sharing groups",
+    ],
     source: "Passive DNS, CT logs, TI platform",
   },
   "initial-access": {
-    confirm: ["First-seen sign-in from anomalous geo/device", "Inbound payload flagged by gateway sandbox"],
-    falsify: ["No new external auth on target identity", "Gateway / WAF show clean inbound for window"],
+    confirm: [
+      "First-seen sign-in from anomalous geo/device",
+      "Inbound payload flagged by gateway sandbox",
+    ],
+    falsify: [
+      "No new external auth on target identity",
+      "Gateway / WAF show clean inbound for window",
+    ],
     source: "Identity provider + email/web gateway",
   },
   execution: {
-    confirm: ["EDR child-process tree from Office / browser", "Unsigned or LOLBin process with network egress"],
-    falsify: ["No suspicious process tree on host in window", "AMSI / script-block logs show no anomalous content"],
+    confirm: [
+      "EDR child-process tree from Office / browser",
+      "Unsigned or LOLBin process with network egress",
+    ],
+    falsify: [
+      "No suspicious process tree on host in window",
+      "AMSI / script-block logs show no anomalous content",
+    ],
     source: "EDR process telemetry",
   },
   persistence: {
-    confirm: ["New autorun / service / scheduled task created", "Directory account created outside change window"],
+    confirm: [
+      "New autorun / service / scheduled task created",
+      "Directory account created outside change window",
+    ],
     falsify: ["Autoruns diff matches gold baseline", "No new privileged accounts in audit log"],
     source: "EDR persistence + directory audit",
   },
   "privilege-escalation": {
-    confirm: ["Integrity-level transition without elevation prompt", "Role assumption to admin role outside PIM"],
+    confirm: [
+      "Integrity-level transition without elevation prompt",
+      "Role assumption to admin role outside PIM",
+    ],
     falsify: ["No new admin role assignments", "No exploitation telemetry from EDR exploit-guard"],
     source: "EDR + cloud audit (CloudTrail / Entra)",
   },
   "defense-evasion": {
-    confirm: ["EDR agent heartbeat loss on target host", "Security event log cleared / shipping gap"],
-    falsify: ["EDR / SIEM heartbeats continuous through window", "No tamper-protection alerts fired"],
+    confirm: [
+      "EDR agent heartbeat loss on target host",
+      "Security event log cleared / shipping gap",
+    ],
+    falsify: [
+      "EDR / SIEM heartbeats continuous through window",
+      "No tamper-protection alerts fired",
+    ],
     source: "EDR health + SIEM ingestion telemetry",
   },
   "credential-access": {
-    confirm: ["LSASS handle access by non-system process", "Burst of failed auths followed by success"],
-    falsify: ["Credential Guard active, no LSASS read events", "No anomalous auth pattern on identity"],
+    confirm: [
+      "LSASS handle access by non-system process",
+      "Burst of failed auths followed by success",
+    ],
+    falsify: [
+      "Credential Guard active, no LSASS read events",
+      "No anomalous auth pattern on identity",
+    ],
     source: "EDR + identity sign-in logs",
   },
   discovery: {
-    confirm: ["LDAP / AD enumeration burst from single host", "Internal port scan signatures east-west"],
+    confirm: [
+      "LDAP / AD enumeration burst from single host",
+      "Internal port scan signatures east-west",
+    ],
     falsify: ["No abnormal directory query volume", "No internal scan signatures in NDR"],
     source: "NDR + directory audit",
   },
@@ -69,23 +111,44 @@ const TACTIC_DEFAULT: Record<TacticId, DetectionEvidence> = {
     source: "Auth graph + EDR remote-exec telemetry",
   },
   collection: {
-    confirm: ["Bulk read by principal far above their baseline", "Off-hours access to sensitive repository"],
-    falsify: ["Read volume within normal band for principal", "No sensitivity-labeled access events"],
+    confirm: [
+      "Bulk read by principal far above their baseline",
+      "Off-hours access to sensitive repository",
+    ],
+    falsify: [
+      "Read volume within normal band for principal",
+      "No sensitivity-labeled access events",
+    ],
     source: "Data platform audit + DLP",
   },
   "command-and-control": {
-    confirm: ["Low-and-slow beaconing to rare destination", "JA3 / TLS fingerprint anomaly with periodicity"],
-    falsify: ["Egress matches known-good destinations only", "No periodicity in outbound flows for host"],
+    confirm: [
+      "Low-and-slow beaconing to rare destination",
+      "JA3 / TLS fingerprint anomaly with periodicity",
+    ],
+    falsify: [
+      "Egress matches known-good destinations only",
+      "No periodicity in outbound flows for host",
+    ],
     source: "NDR / proxy / DNS",
   },
   exfiltration: {
     confirm: ["Outbound volume spike to unsanctioned SaaS", "DLP match on egress payload"],
-    falsify: ["Egress within baseline + only to sanctioned SaaS", "No DLP signal on outbound content"],
+    falsify: [
+      "Egress within baseline + only to sanctioned SaaS",
+      "No DLP signal on outbound content",
+    ],
     source: "CASB / DLP / proxy",
   },
   impact: {
-    confirm: ["Mass file rename / encryption telemetry", "Backup deletion or shadow-copy removal events"],
-    falsify: ["No canary file triggers in window", "Backup catalog intact, no vssadmin / wbadmin events"],
+    confirm: [
+      "Mass file rename / encryption telemetry",
+      "Backup deletion or shadow-copy removal events",
+    ],
+    falsify: [
+      "No canary file triggers in window",
+      "Backup catalog intact, no vssadmin / wbadmin events",
+    ],
     source: "EDR ransomware behavior + backup audit",
   },
 };
@@ -114,7 +177,7 @@ const TECHNIQUE_OVERRIDES: Record<string, DetectionEvidence> = {
     ],
     source: "URL rewrite logs + IdP sign-in logs",
   },
-  "T1190": {
+  T1190: {
     confirm: [
       "WAF anomaly burst against vulnerable endpoint",
       "Outbound from DMZ host to attacker-controlled IP",
@@ -125,7 +188,7 @@ const TECHNIQUE_OVERRIDES: Record<string, DetectionEvidence> = {
     ],
     source: "WAF + NDR egress",
   },
-  "T1078": {
+  T1078: {
     confirm: [
       "Existing session reused from new device fingerprint",
       "Token replay observed on new ASN",
@@ -141,10 +204,7 @@ const TECHNIQUE_OVERRIDES: Record<string, DetectionEvidence> = {
       "Encoded PowerShell command logged via script-block logging",
       "AMSI flagged content in PS pipeline",
     ],
-    falsify: [
-      "Constrained Language Mode active, no -enc usage",
-      "AMSI logs clean for window",
-    ],
+    falsify: ["Constrained Language Mode active, no -enc usage", "AMSI logs clean for window"],
     source: "PowerShell script-block + AMSI",
   },
   "T1003.001": {
@@ -158,15 +218,12 @@ const TECHNIQUE_OVERRIDES: Record<string, DetectionEvidence> = {
     ],
     source: "EDR LSASS access telemetry",
   },
-  "T1539": {
+  T1539: {
     confirm: [
       "Same auth cookie observed on second device fingerprint",
       "Token-binding mismatch on session validation",
     ],
-    falsify: [
-      "Token bound to original device for full lifetime",
-      "No CAE revocation events fired",
-    ],
+    falsify: ["Token bound to original device for full lifetime", "No CAE revocation events fired"],
     source: "IdP session / CAE telemetry",
   },
   "T1071.001": {
@@ -180,7 +237,7 @@ const TECHNIQUE_OVERRIDES: Record<string, DetectionEvidence> = {
     ],
     source: "NDR / proxy JA3 telemetry",
   },
-  "T1486": {
+  T1486: {
     confirm: [
       "Mass file rename to single extension across share",
       "Canary file modified by non-owner process",
@@ -191,7 +248,7 @@ const TECHNIQUE_OVERRIDES: Record<string, DetectionEvidence> = {
     ],
     source: "EDR ransomware behavior + canary files",
   },
-  "T1490": {
+  T1490: {
     confirm: [
       "vssadmin delete shadows / wbadmin delete catalog observed",
       "Backup console API calls from non-admin host",
@@ -213,7 +270,7 @@ const TECHNIQUE_OVERRIDES: Record<string, DetectionEvidence> = {
     ],
     source: "CASB + DLP",
   },
-  "T1041": {
+  T1041: {
     confirm: [
       "Outbound bytes from host significantly above baseline",
       "Sustained encrypted egress to single rare destination",
@@ -224,7 +281,7 @@ const TECHNIQUE_OVERRIDES: Record<string, DetectionEvidence> = {
     ],
     source: "NDR flow telemetry",
   },
-  "T1498": {
+  T1498: {
     confirm: [
       "Traffic baseline deviation per route exceeds threshold",
       "Upstream scrubbing service reports active mitigation",
@@ -235,7 +292,7 @@ const TECHNIQUE_OVERRIDES: Record<string, DetectionEvidence> = {
     ],
     source: "Edge / CDN / scrubbing telemetry",
   },
-  "T1110": {
+  T1110: {
     confirm: [
       "Auth failure rate spike across many accounts from few IPs",
       "Low-and-slow failed-auth fan-out across tenant",
@@ -262,13 +319,10 @@ const TECHNIQUE_OVERRIDES: Record<string, DetectionEvidence> = {
       "SMB write of executable to ADMIN$ on remote host",
       "Service install event on destination after SMB write",
     ],
-    falsify: [
-      "No SMB writes to admin shares in window",
-      "No new service installs across fleet",
-    ],
+    falsify: ["No SMB writes to admin shares in window", "No new service installs across fleet"],
     source: "EDR remote-exec + Windows event 7045",
   },
-  "T1213": {
+  T1213: {
     confirm: [
       "Bulk read by principal far above per-user baseline",
       "Sensitivity-labeled doc access outside business hours",
@@ -279,7 +333,7 @@ const TECHNIQUE_OVERRIDES: Record<string, DetectionEvidence> = {
     ],
     source: "M365 / data platform audit",
   },
-  "T1657": {
+  T1657: {
     confirm: [
       "Wire approved without out-of-band verification",
       "Vendor banking detail change with no callback record",

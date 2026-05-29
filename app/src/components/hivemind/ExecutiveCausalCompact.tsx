@@ -81,9 +81,7 @@ export function ExecutiveCausalCompact({ graph, trace }: Props) {
           activeNode={activeNode}
           highlightedNodes={highlightedNodes}
           onHoverNode={setHoverNode}
-          onClickNode={(id) =>
-            setPinnedNode((cur) => (cur === id ? null : id))
-          }
+          onClickNode={(id) => setPinnedNode((cur) => (cur === id ? null : id))}
         />
 
         <AgentHierarchy
@@ -95,9 +93,7 @@ export function ExecutiveCausalCompact({ graph, trace }: Props) {
 
       <Legend />
 
-      {trace && activeNode && (
-        <NodeInsight nodeId={activeNode} graph={graph} trace={trace} />
-      )}
+      {trace && activeNode && <NodeInsight nodeId={activeNode} graph={graph} trace={trace} />}
     </section>
   );
 }
@@ -170,10 +166,7 @@ function CompactDAG({
             const color = ann ? `var(${colorVar})` : "rgba(148,163,184,0.55)";
             const conf = ann?.confidence ?? 0.55;
             const stroke = 0.8 + conf * 2.2;
-            const dim =
-              activeNode != null &&
-              activeNode !== e.source &&
-              activeNode !== e.target;
+            const dim = activeNode != null && activeNode !== e.source && activeNode !== e.target;
             const path = curvedPath(s.x, s.y, t.x, t.y);
             return (
               <g key={idx} style={{ color }} opacity={dim ? 0.18 : 0.95}>
@@ -282,9 +275,7 @@ function AgentHierarchy({ trace, highlightedAgent, onHoverAgent }: HierarchyProp
   }
 
   const orchestrator = trace.agents.find((a) => a.level === "orchestrator");
-  const domains = trace.agents.filter(
-    (a) => a.level === "domain" && a.status === "active",
-  );
+  const domains = trace.agents.filter((a) => a.level === "domain" && a.status === "active");
 
   return (
     <div className="relative max-h-[300px] overflow-auto rounded-xl border border-white/5 bg-black/20 p-3">
@@ -406,15 +397,16 @@ function AgentRow({
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <div className={cn("truncate", compact ? "text-[11px]" : "text-xs")}>
-          {agent.label}
-        </div>
+        <div className={cn("truncate", compact ? "text-[11px]" : "text-xs")}>{agent.label}</div>
         {!compact && (
           <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
             {agent.domain ? domainLabel(agent.domain) : agent.level} · conf{" "}
             {(agent.selfConfidence * 100).toFixed(0)}%
             {childCount != null && childCount > 0 && (
-              <> · {childCount} child{childCount === 1 ? "" : "ren"}</>
+              <>
+                {" "}
+                · {childCount} child{childCount === 1 ? "" : "ren"}
+              </>
             )}
           </div>
         )}
@@ -503,16 +495,12 @@ function EdgeList({
                 }}
                 title={evidenceLabel(e.evidenceType)}
               />
-              <span className="truncate text-[11px] text-foreground/90">
-                {e.relationship}
-              </span>
+              <span className="truncate text-[11px] text-foreground/90">{e.relationship}</span>
               <span className="ml-auto font-mono text-[10px] tabular-nums text-muted-foreground">
                 {(e.confidence * 100).toFixed(0)}%
               </span>
               <span className="font-mono text-[9px] uppercase text-muted-foreground/70">
-                {side === "source"
-                  ? `← ${truncate(e.source, 14)}`
-                  : `→ ${truncate(e.target, 14)}`}
+                {side === "source" ? `← ${truncate(e.source, 14)}` : `→ ${truncate(e.target, 14)}`}
               </span>
             </li>
           ))}

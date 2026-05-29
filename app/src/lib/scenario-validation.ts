@@ -40,10 +40,7 @@ const REQUIRED_FIELDS: { key: FieldKey; label: string }[] = [
  * Real-time validator for the Threat Scenario Builder.
  * Pure, fast (<1ms), runs on every render via useMemo.
  */
-export function validateScenario(
-  state: ScenarioState,
-  ttpIds: string[],
-): ValidationResult {
+export function validateScenario(state: ScenarioState, ttpIds: string[]): ValidationResult {
   const issues: ValidationIssue[] = [];
 
   // ---------- Required fields (errors) ----------
@@ -104,7 +101,8 @@ export function validateScenario(
       id: "conflict-insider-exploit",
       severity: "warning",
       title: "Actor / Vector conflict",
-      detail: "Actor is described as an insider, but Entry Vector describes external exploitation (0-day / RCE).",
+      detail:
+        "Actor is described as an insider, but Entry Vector describes external exploitation (0-day / RCE).",
       fix: "Either reclassify the actor as external attacker, or change vector to legitimate authenticated access.",
       field: "vector",
     });
@@ -130,7 +128,8 @@ export function validateScenario(
       id: "conflict-ransom-no-impact",
       severity: "error",
       title: "Ransomware objective has no Impact technique",
-      detail: "Objective implies destructive impact, but no MITRE Impact tactic technique is in the chain.",
+      detail:
+        "Objective implies destructive impact, but no MITRE Impact tactic technique is in the chain.",
       fix: "Add T1486 (Data Encrypted for Impact) and T1490 (Inhibit System Recovery).",
       addTtpIds: ["T1486", "T1490"],
       field: "ttps",
@@ -165,7 +164,8 @@ export function validateScenario(
         id: "chain-no-initial-access",
         severity: "warning",
         title: "Chain missing Initial Access",
-        detail: "No technique in the Initial Access tactic — the chain has no defined starting point.",
+        detail:
+          "No technique in the Initial Access tactic — the chain has no defined starting point.",
         fix: "Add T1566.001 (Spearphishing), T1190 (Exploit Public-Facing App), or T1078 (Valid Accounts).",
         field: "ttps",
       });
@@ -183,15 +183,13 @@ export function validateScenario(
       });
     }
     // ---------- Conflict: impact-only chain ----------
-    if (
-      tacticsPresent.has("impact") &&
-      tacticsPresent.size === 1
-    ) {
+    if (tacticsPresent.has("impact") && tacticsPresent.size === 1) {
       issues.push({
         id: "chain-impact-only",
         severity: "error",
         title: "Chain is Impact-only",
-        detail: "An attacker cannot reach Impact without Initial Access first. The chain is unrealistic.",
+        detail:
+          "An attacker cannot reach Impact without Initial Access first. The chain is unrealistic.",
         fix: "Add at least one Initial Access technique upstream.",
         field: "ttps",
       });
@@ -252,7 +250,8 @@ export function validateScenario(
       id: "info-no-gaps",
       severity: "info",
       title: "Detection Gaps not specified",
-      detail: "Without gaps, the engine assumes uniform coverage and downweights containment options.",
+      detail:
+        "Without gaps, the engine assumes uniform coverage and downweights containment options.",
       fix: "Add at least one blind spot — even 'EDR not deployed on jump hosts' helps.",
       field: "detection_gaps",
     });

@@ -64,7 +64,8 @@ export const FIELDS: ScenarioField[] = [
     key: "impact",
     label: "Expected Impact",
     helper: "Business + technical blast radius if successful.",
-    placeholder: "e.g. ~14h customer-facing outage, regulatory disclosure (GDPR), board notification",
+    placeholder:
+      "e.g. ~14h customer-facing outage, regulatory disclosure (GDPR), board notification",
     multiline: true,
   },
   {
@@ -109,16 +110,24 @@ export const SCENARIO_LIBRARY: ScenarioLibraryEntry[] = [
     id: "ransomware-cloud",
     emoji: "🔒",
     label: "Ransomware in enterprise cloud",
-    oneLiner: "Edge appliance compromise → cloud admin abuse → mass encryption + recovery sabotage.",
+    oneLiner:
+      "Edge appliance compromise → cloud admin abuse → mass encryption + recovery sabotage.",
     fields: {
-      asset: "Production AWS environment (3 accounts, ~480 EC2, RDS, S3 with customer PII). Crown-jewel data warehouse on Snowflake.",
-      actor: "Financially motivated ransomware affiliate (LockBit-aligned), confirmed via leak-site post.",
-      objective: "Double extortion — exfiltrate customer + financial data, then encrypt/destroy backups, deploy ransomware across hypervisors.",
-      vector: "Initial access via 0-day in internet-facing VPN appliance (CVE pending). 36h dwell before detonation.",
+      asset:
+        "Production AWS environment (3 accounts, ~480 EC2, RDS, S3 with customer PII). Crown-jewel data warehouse on Snowflake.",
+      actor:
+        "Financially motivated ransomware affiliate (LockBit-aligned), confirmed via leak-site post.",
+      objective:
+        "Double extortion — exfiltrate customer + financial data, then encrypt/destroy backups, deploy ransomware across hypervisors.",
+      vector:
+        "Initial access via 0-day in internet-facing VPN appliance (CVE pending). 36h dwell before detonation.",
       ttps: "",
-      environment: "Hybrid: AWS multi-account + on-prem hypervisors. Entra ID for SSO, Defender for Cloud, CrowdStrike on endpoints. Backup MFA enabled. Limited east-west segmentation in cloud.",
-      impact: "Estimated $14M/day revenue at risk, ~72h customer outage, GDPR / SEC 8-K disclosure. Board + regulator notification required within 24h.",
-      detection_gaps: "VPN appliance not in EDR scope. Snowflake egress not monitored by DLP. No canary files in prod S3. Backup deletion alerting not piped to SOC.",
+      environment:
+        "Hybrid: AWS multi-account + on-prem hypervisors. Entra ID for SSO, Defender for Cloud, CrowdStrike on endpoints. Backup MFA enabled. Limited east-west segmentation in cloud.",
+      impact:
+        "Estimated $14M/day revenue at risk, ~72h customer outage, GDPR / SEC 8-K disclosure. Board + regulator notification required within 24h.",
+      detection_gaps:
+        "VPN appliance not in EDR scope. Snowflake egress not monitored by DLP. No canary files in prod S3. Backup deletion alerting not piped to SOC.",
     },
     ttps: [
       "T1190",
@@ -136,16 +145,23 @@ export const SCENARIO_LIBRARY: ScenarioLibraryEntry[] = [
     id: "insider-exfil",
     emoji: "🕵️",
     label: "Insider data exfiltration (privileged user)",
-    oneLiner: "Resigning data engineer abuses legitimate access to bulk-exfil customer data to personal cloud.",
+    oneLiner:
+      "Resigning data engineer abuses legitimate access to bulk-exfil customer data to personal cloud.",
     fields: {
-      asset: "Internal data lake (S3 + Snowflake) — 14GB downloaded over 4 nights including customer PII and pricing models.",
-      actor: "Senior data engineer, 2-week notice served, joining a direct competitor. Privileged read on data lake.",
+      asset:
+        "Internal data lake (S3 + Snowflake) — 14GB downloaded over 4 nights including customer PII and pricing models.",
+      actor:
+        "Senior data engineer, 2-week notice served, joining a direct competitor. Privileged read on data lake.",
       objective: "Exfiltrate proprietary pricing models + customer PII to use at next employer.",
-      vector: "Legitimate authenticated access. Personal cloud-sync client used briefly before being blocked by CASB.",
+      vector:
+        "Legitimate authenticated access. Personal cloud-sync client used briefly before being blocked by CASB.",
       ttps: "",
-      environment: "Snowflake + S3 + Looker. CASB inline. Identity governed by Okta. No DLP on outbound personal cloud beyond CASB block.",
-      impact: "Reputational + legal — competitor lawsuit precedent ($30M+). Notification obligations under state PII laws.",
-      detection_gaps: "No volume baseline per data engineer. CASB blocked but no historical signal review. HR / IT not coupled for departing-employee monitoring.",
+      environment:
+        "Snowflake + S3 + Looker. CASB inline. Identity governed by Okta. No DLP on outbound personal cloud beyond CASB block.",
+      impact:
+        "Reputational + legal — competitor lawsuit precedent ($30M+). Notification obligations under state PII laws.",
+      detection_gaps:
+        "No volume baseline per data engineer. CASB blocked but no historical signal review. HR / IT not coupled for departing-employee monitoring.",
     },
     ttps: ["T1078", "T1213", "T1119", "T1567.002"],
   },
@@ -153,16 +169,23 @@ export const SCENARIO_LIBRARY: ScenarioLibraryEntry[] = [
     id: "supply-chain-cicd",
     emoji: "🔗",
     label: "Supply chain via CI/CD",
-    oneLiner: "Malicious upstream npm package executes postinstall script in build agents, exfils secrets.",
+    oneLiner:
+      "Malicious upstream npm package executes postinstall script in build agents, exfils secrets.",
     fields: {
-      asset: "Customer-facing web app (Node.js). Build pipeline in GitHub Actions with access to AWS deploy role + Stripe / Twilio secrets.",
+      asset:
+        "Customer-facing web app (Node.js). Build pipeline in GitHub Actions with access to AWS deploy role + Stripe / Twilio secrets.",
       actor: "Unattributed supply-chain actor — pattern matches recent npm typosquat campaigns.",
-      objective: "Steal CI/CD credentials → pivot to production infra → potential supply-chain compromise to downstream customers.",
-      vector: "Auto-bumped dependency on a feature branch yesterday. Postinstall script exfils env vars to attacker-controlled domain.",
+      objective:
+        "Steal CI/CD credentials → pivot to production infra → potential supply-chain compromise to downstream customers.",
+      vector:
+        "Auto-bumped dependency on a feature branch yesterday. Postinstall script exfils env vars to attacker-controlled domain.",
       ttps: "",
-      environment: "GitHub Actions self-hosted runners, AWS OIDC for deploys, Vault for secrets. SBOM generated but not diffed on PR.",
-      impact: "All CI secrets must be rotated. If shipped: customer-side compromise + SEC disclosure. ~$2M direct cost + brand impact.",
-      detection_gaps: "No egress allow-list on build runners. Postinstall scripts run by default. SBOM not gated in PR.",
+      environment:
+        "GitHub Actions self-hosted runners, AWS OIDC for deploys, Vault for secrets. SBOM generated but not diffed on PR.",
+      impact:
+        "All CI secrets must be rotated. If shipped: customer-side compromise + SEC disclosure. ~$2M direct cost + brand impact.",
+      detection_gaps:
+        "No egress allow-list on build runners. Postinstall scripts run by default. SBOM not gated in PR.",
     },
     ttps: ["T1195.002", "T1059.001", "T1071.001", "T1041"],
   },
@@ -170,16 +193,22 @@ export const SCENARIO_LIBRARY: ScenarioLibraryEntry[] = [
     id: "phishing-identity",
     emoji: "🎣",
     label: "Phishing-led identity takeover (M365 / Workspace)",
-    oneLiner: "Spear-phish → AiTM session theft → cloud admin escalation → mailbox + SharePoint pivot.",
+    oneLiner:
+      "Spear-phish → AiTM session theft → cloud admin escalation → mailbox + SharePoint pivot.",
     fields: {
       asset: "M365 tenant (~28k users), Entra ID, SharePoint Online with sensitive M&A documents.",
-      actor: "Financially motivated, AiTM toolkit (EvilProxy-style). Credential broker resale likely downstream.",
-      objective: "Mailbox access to executives → BEC / wire fraud, plus M&A document staging for extortion.",
-      vector: "Spear-phish with lookalike Microsoft login on AiTM proxy. Session cookie captured + replayed.",
+      actor:
+        "Financially motivated, AiTM toolkit (EvilProxy-style). Credential broker resale likely downstream.",
+      objective:
+        "Mailbox access to executives → BEC / wire fraud, plus M&A document staging for extortion.",
+      vector:
+        "Spear-phish with lookalike Microsoft login on AiTM proxy. Session cookie captured + replayed.",
       ttps: "",
-      environment: "Entra ID with conditional access (IP-based, no device binding). Defender for Cloud Apps. No FIDO2 enforcement on execs.",
+      environment:
+        "Entra ID with conditional access (IP-based, no device binding). Defender for Cloud Apps. No FIDO2 enforcement on execs.",
       impact: "Direct fraud risk $5–20M, plus M&A disclosure / deal collapse risk.",
-      detection_gaps: "No token binding. Session reuse from new device flagged but not auto-revoked. Exec mailbox rules not monitored.",
+      detection_gaps:
+        "No token binding. Session reuse from new device flagged but not auto-revoked. Exec mailbox rules not monitored.",
     },
     ttps: ["T1566.002", "T1539", "T1078", "T1550.004", "T1078.004", "T1657"],
   },
@@ -189,14 +218,19 @@ export const SCENARIO_LIBRARY: ScenarioLibraryEntry[] = [
     label: "Lateral movement post edge-device compromise",
     oneLiner: "Edge router 0-day → DMZ pivot → AD enumeration → SMB lateral → domain dominance.",
     fields: {
-      asset: "Internet-facing edge appliance fronting corporate network. On-prem AD, ~12k endpoints, file servers with regulated data.",
+      asset:
+        "Internet-facing edge appliance fronting corporate network. On-prem AD, ~12k endpoints, file servers with regulated data.",
       actor: "Suspected nation-state aligned (TTP overlap with Volt-Typhoon-style staging).",
       objective: "Persistence + intel collection + pre-positioning for disruptive impact.",
-      vector: "RCE in management plane of edge appliance, exposed to internet. ~36h LSASS dump on jump host before detection.",
+      vector:
+        "RCE in management plane of edge appliance, exposed to internet. ~36h LSASS dump on jump host before detection.",
       ttps: "",
-      environment: "Flat AD design, tier-0 not enforced. EDR on workstations but not jump hosts or appliances. SMB signing partial.",
-      impact: "Potential domain dominance — full reset required if confirmed. Regulatory posture for critical infra applies.",
-      detection_gaps: "No EDR on jump host. SMB writes to file servers not baselined. AD attack-path tooling not in production.",
+      environment:
+        "Flat AD design, tier-0 not enforced. EDR on workstations but not jump hosts or appliances. SMB signing partial.",
+      impact:
+        "Potential domain dominance — full reset required if confirmed. Regulatory posture for critical infra applies.",
+      detection_gaps:
+        "No EDR on jump host. SMB writes to file servers not baselined. AD attack-path tooling not in production.",
     },
     ttps: [
       "T1190",
@@ -216,14 +250,17 @@ export const SCENARIO_LIBRARY: ScenarioLibraryEntry[] = [
     label: "Zero-day in perimeter service",
     oneLiner: "Unauthenticated RCE in internet-facing service → webshell → C2 → discovery.",
     fields: {
-      asset: "Internet-facing collaboration / file-transfer service (MOVEit-class). Holds regulated documents in transit.",
+      asset:
+        "Internet-facing collaboration / file-transfer service (MOVEit-class). Holds regulated documents in transit.",
       actor: "Cl0p-style mass-exploitation actor — opportunistic, broad targeting.",
       objective: "Bulk exfiltration of in-transit files, leak-site extortion.",
       vector: "Unauthenticated RCE, no patch available at first contact (true 0-day).",
       ttps: "",
-      environment: "Service in DMZ, behind WAF (vendor signatures only). EDR present but not behavior-based for this service. TLS inspection off for performance.",
+      environment:
+        "Service in DMZ, behind WAF (vendor signatures only). EDR present but not behavior-based for this service. TLS inspection off for performance.",
       impact: "Mass disclosure of regulated documents. Customer notification within 72h (GDPR).",
-      detection_gaps: "WAF lags 0-day. No outbound egress allow-list from DMZ. Webshell behavior not modeled.",
+      detection_gaps:
+        "WAF lags 0-day. No outbound egress allow-list from DMZ. Webshell behavior not modeled.",
     },
     ttps: ["T1190", "T1059.001", "T1071.001", "T1090", "T1018", "T1041"],
   },
@@ -242,12 +279,22 @@ function firstMatch(text: string, regex: RegExp): string | null {
   return m ? m[0] : null;
 }
 
-function detectActor(text: string): { value: string; confidence: "high" | "medium" | "low" } | null {
+function detectActor(
+  text: string,
+): { value: string; confidence: "high" | "medium" | "low" } | null {
   if (/\b(insider|employee|contractor|resigning|departing)\b/i.test(text)) {
-    return { value: "Insider — current/departing employee with privileged access", confidence: "high" };
+    return {
+      value: "Insider — current/departing employee with privileged access",
+      confidence: "high",
+    };
   }
-  if (/\b(apt|nation[- ]state|state[- ]sponsored|volt[- ]?typhoon|fancy bear|equation)\b/i.test(text)) {
-    return { value: "Nation-state aligned APT (likely strategic, long dwell)", confidence: "medium" };
+  if (
+    /\b(apt|nation[- ]state|state[- ]sponsored|volt[- ]?typhoon|fancy bear|equation)\b/i.test(text)
+  ) {
+    return {
+      value: "Nation-state aligned APT (likely strategic, long dwell)",
+      confidence: "medium",
+    };
   }
   if (/\b(ransomware|lockbit|cl0p|black ?cat|alphv|conti)\b/i.test(text)) {
     return { value: "Financially motivated ransomware affiliate", confidence: "high" };
@@ -256,7 +303,10 @@ function detectActor(text: string): { value: string; confidence: "high" | "mediu
     return { value: "Supply-chain actor (opportunistic, downstream impact)", confidence: "medium" };
   }
   if (/\b(phish|bec|business email)\b/i.test(text)) {
-    return { value: "Financially motivated cybercrime, credential / wire fraud focus", confidence: "medium" };
+    return {
+      value: "Financially motivated cybercrime, credential / wire fraud focus",
+      confidence: "medium",
+    };
   }
   if (/\b(attacker|adversary|threat actor)\b/i.test(text)) {
     return { value: "External attacker (attribution unknown at this stage)", confidence: "low" };
@@ -264,7 +314,9 @@ function detectActor(text: string): { value: string; confidence: "high" | "mediu
   return null;
 }
 
-function detectAsset(text: string): { value: string; confidence: "high" | "medium" | "low" } | null {
+function detectAsset(
+  text: string,
+): { value: string; confidence: "high" | "medium" | "low" } | null {
   const m = firstMatch(
     text,
     /\b(production [\w\- ]{2,30}|customer (?:pii|data|database)|data lake|data warehouse|file servers?|domain controllers?|m365 tenant|aws (?:account|environment)|kubernetes cluster|ci\/cd pipeline|edge appliance|vpn appliance)\b/i,
@@ -273,10 +325,15 @@ function detectAsset(text: string): { value: string; confidence: "high" | "mediu
   return null;
 }
 
-function detectVector(text: string): { value: string; confidence: "high" | "medium" | "low" } | null {
+function detectVector(
+  text: string,
+): { value: string; confidence: "high" | "medium" | "low" } | null {
   if (/\bphish/i.test(text)) return { value: "Spear-phishing (email-borne)", confidence: "high" };
   if (/\b(0[- ]?day|zero[- ]?day|cve|rce|unauth(enticated)? rce)\b/i.test(text))
-    return { value: "Exploit of internet-facing service (0-day / unpatched CVE)", confidence: "high" };
+    return {
+      value: "Exploit of internet-facing service (0-day / unpatched CVE)",
+      confidence: "high",
+    };
   if (/\b(rdp|exposed (?:rdp|service)|jump host)\b/i.test(text))
     return { value: "Exposed remote service (RDP / jump host)", confidence: "high" };
   if (/\b(supply chain|malicious (?:package|dependency)|postinstall|npm|pypi)\b/i.test(text))
@@ -288,7 +345,9 @@ function detectVector(text: string): { value: string; confidence: "high" | "medi
   return null;
 }
 
-function detectObjective(text: string): { value: string; confidence: "high" | "medium" | "low" } | null {
+function detectObjective(
+  text: string,
+): { value: string; confidence: "high" | "medium" | "low" } | null {
   if (/\b(ransomware|encrypt|ransom note|\.lck|double extortion)\b/i.test(text))
     return { value: "Encrypt for impact + exfil for double extortion", confidence: "high" };
   if (/\b(exfil|exfiltration|data theft|leak[- ]site)\b/i.test(text))
@@ -296,39 +355,55 @@ function detectObjective(text: string): { value: string; confidence: "high" | "m
   if (/\b(ddos|flood|volumetric)\b/i.test(text))
     return { value: "Service disruption (denial of service)", confidence: "high" };
   if (/\b(persistence|pre[- ]position|long dwell|intel|espionage)\b/i.test(text))
-    return { value: "Persistence + intelligence collection (no immediate impact)", confidence: "medium" };
+    return {
+      value: "Persistence + intelligence collection (no immediate impact)",
+      confidence: "medium",
+    };
   if (/\b(bec|wire fraud|payment fraud|invoice)\b/i.test(text))
     return { value: "Financial fraud (BEC / wire / invoice)", confidence: "high" };
   return null;
 }
 
-function detectEnvironment(text: string): { value: string; confidence: "high" | "medium" | "low" } | null {
+function detectEnvironment(
+  text: string,
+): { value: string; confidence: "high" | "medium" | "low" } | null {
   const parts: string[] = [];
   if (/\b(aws|azure|gcp|cloud)\b/i.test(text)) parts.push("Cloud workloads present");
   if (/\b(on[- ]prem|hypervisor|esxi|vmware)\b/i.test(text)) parts.push("On-prem / hypervisor");
-  if (/\b(okta|entra|azure ad|active directory|sso)\b/i.test(text)) parts.push("Identity = SSO + directory");
-  if (/\b(edr|crowdstrike|defender|sentinel ?one|carbon black)\b/i.test(text)) parts.push("EDR present");
-  if (/\b(zero ?trust|microsegment|segmentation)\b/i.test(text)) parts.push("Zero-trust posture stated");
+  if (/\b(okta|entra|azure ad|active directory|sso)\b/i.test(text))
+    parts.push("Identity = SSO + directory");
+  if (/\b(edr|crowdstrike|defender|sentinel ?one|carbon black)\b/i.test(text))
+    parts.push("EDR present");
+  if (/\b(zero ?trust|microsegment|segmentation)\b/i.test(text))
+    parts.push("Zero-trust posture stated");
   if (parts.length === 0) return null;
   return { value: parts.join(" · "), confidence: parts.length >= 3 ? "medium" : "low" };
 }
 
-function detectImpact(text: string): { value: string; confidence: "high" | "medium" | "low" } | null {
+function detectImpact(
+  text: string,
+): { value: string; confidence: "high" | "medium" | "low" } | null {
   const parts: string[] = [];
-  if (/\b(pii|personal data|customer data)\b/i.test(text)) parts.push("Customer PII exposure (regulatory disclosure)");
+  if (/\b(pii|personal data|customer data)\b/i.test(text))
+    parts.push("Customer PII exposure (regulatory disclosure)");
   if (/\b(downtime|outage|customer[- ]facing)\b/i.test(text)) parts.push("Customer-facing outage");
   if (/\b(ransomware|encrypt)\b/i.test(text)) parts.push("Encryption / business halt");
-  if (/\b(reputational|brand|disclosure|sec |8[- ]k)\b/i.test(text)) parts.push("Reputational + regulatory disclosure");
+  if (/\b(reputational|brand|disclosure|sec |8[- ]k)\b/i.test(text))
+    parts.push("Reputational + regulatory disclosure");
   if (parts.length === 0) return null;
   return { value: parts.join(" · "), confidence: "low" };
 }
 
-function detectDetectionGaps(text: string): { value: string; confidence: "high" | "medium" | "low" } | null {
+function detectDetectionGaps(
+  text: string,
+): { value: string; confidence: "high" | "medium" | "low" } | null {
   const gaps: string[] = [];
-  if (/\b(no edr|edr not|legacy|jump host|appliance)\b/i.test(text)) gaps.push("EDR coverage gap on edge / legacy systems");
+  if (/\b(no edr|edr not|legacy|jump host|appliance)\b/i.test(text))
+    gaps.push("EDR coverage gap on edge / legacy systems");
   if (/\b(no dlp|egress|outbound)\b/i.test(text)) gaps.push("Egress / DLP gap");
   if (/\b(backup|shadow|vssadmin)\b/i.test(text)) gaps.push("Backup-deletion telemetry not in SOC");
-  if (/\b(session cookie|token replay|aitm)\b/i.test(text)) gaps.push("Session-token theft not detected");
+  if (/\b(session cookie|token replay|aitm)\b/i.test(text))
+    gaps.push("Session-token theft not detected");
   if (gaps.length === 0) return null;
   return { value: gaps.join(" · "), confidence: "low" };
 }
@@ -443,14 +518,20 @@ export function generateRefinements(
   const has = (id: string) => ttpIds.includes(id);
 
   // Phishing implies credential dumping / session theft downstream
-  if ((has("T1566.001") || has("T1566.002") || /phish/i.test(state.vector + state.objective)) && !has("T1003.001") && !has("T1539")) {
+  if (
+    (has("T1566.001") || has("T1566.002") || /phish/i.test(state.vector + state.objective)) &&
+    !has("T1003.001") &&
+    !has("T1539")
+  ) {
     out.push({
       id: "ttp-creds",
       kind: "add-ttp",
       title: "Add T1539 — Steal Web Session Cookie",
-      detail: "Phishing initial access in 2024+ campaigns is dominated by AiTM toolkits that capture session cookies, bypassing MFA. Adding this strengthens the chain's realism.",
+      detail:
+        "Phishing initial access in 2024+ campaigns is dominated by AiTM toolkits that capture session cookies, bypassing MFA. Adding this strengthens the chain's realism.",
       apply: { addTtpId: "T1539" },
-      rationale: "Initial access via phishing implies likely credential or session-token capture; explicit chain step prevents the engine from treating MFA as a hard stop.",
+      rationale:
+        "Initial access via phishing implies likely credential or session-token capture; explicit chain step prevents the engine from treating MFA as a hard stop.",
     });
   }
 
@@ -460,9 +541,11 @@ export function generateRefinements(
       id: "ttp-lsass",
       kind: "add-ttp",
       title: "Add T1003.001 — LSASS Memory Dump",
-      detail: "Hands-on-keyboard intrusions via RDP/jump hosts almost always proceed to credential dumping for lateral movement. Without it, the chain skips the most reliable detection point.",
+      detail:
+        "Hands-on-keyboard intrusions via RDP/jump hosts almost always proceed to credential dumping for lateral movement. Without it, the chain skips the most reliable detection point.",
       apply: { addTtpId: "T1003.001" },
-      rationale: "Hands-on-keyboard intrusion implies credential reuse opportunity. Adding LSASS dump matches observed adversary behavior in this class.",
+      rationale:
+        "Hands-on-keyboard intrusion implies credential reuse opportunity. Adding LSASS dump matches observed adversary behavior in this class.",
     });
   }
 
@@ -472,9 +555,11 @@ export function generateRefinements(
       id: "ttp-inhibit",
       kind: "add-ttp",
       title: "Add T1490 — Inhibit System Recovery",
-      detail: "Modern ransomware crews delete shadow copies and target backup consoles before encryption. Excluding this understates recovery cost.",
+      detail:
+        "Modern ransomware crews delete shadow copies and target backup consoles before encryption. Excluding this understates recovery cost.",
       apply: { addTtpId: "T1490" },
-      rationale: "Encryption without recovery sabotage is unrealistic — affiliates routinely target backups first.",
+      rationale:
+        "Encryption without recovery sabotage is unrealistic — affiliates routinely target backups first.",
     });
   }
 
@@ -484,9 +569,11 @@ export function generateRefinements(
       id: "ttp-exfil",
       kind: "add-ttp",
       title: "Add T1041 — Exfiltration over C2",
-      detail: "Postinstall scripts that beacon out almost always exfil environment variables / secrets in the same channel.",
+      detail:
+        "Postinstall scripts that beacon out almost always exfil environment variables / secrets in the same channel.",
       apply: { addTtpId: "T1041" },
-      rationale: "Establishing C2 from a build runner without exfil is implausible — the chain should reflect both.",
+      rationale:
+        "Establishing C2 from a build runner without exfil is implausible — the chain should reflect both.",
     });
   }
 
@@ -496,12 +583,14 @@ export function generateRefinements(
       id: "field-gaps",
       kind: "missing-assumption",
       title: "Detection Gaps not specified",
-      detail: "The engine cannot weight defensive blind spots without explicit gap statements. Even one line ('no EDR on jump hosts') materially changes recommended strategies.",
+      detail:
+        "The engine cannot weight defensive blind spots without explicit gap statements. Even one line ('no EDR on jump hosts') materially changes recommended strategies.",
       apply: {
         field: "detection_gaps",
         appendText: "EDR coverage gap on edge / legacy systems; egress not baselined per workload.",
       },
-      rationale: "Without stated gaps, the engine assumes uniform detection coverage and downweights containment options.",
+      rationale:
+        "Without stated gaps, the engine assumes uniform detection coverage and downweights containment options.",
     });
   }
 
@@ -511,8 +600,10 @@ export function generateRefinements(
       id: "alt-destructive",
       kind: "alt-strategy",
       title: "Consider destructive-only variant (no encryption)",
-      detail: "Some affiliates skip encryption and pure-wipe + leak. This removes the 'pay to decrypt' option and forces a different decision tree (restore + disclose).",
-      rationale: "Forces analysts to consider non-monetizable destruction — common pivot when affiliates are sanctioned.",
+      detail:
+        "Some affiliates skip encryption and pure-wipe + leak. This removes the 'pay to decrypt' option and forces a different decision tree (restore + disclose).",
+      rationale:
+        "Forces analysts to consider non-monetizable destruction — common pivot when affiliates are sanctioned.",
     });
   }
 
@@ -522,9 +613,15 @@ export function generateRefinements(
       id: "field-actor",
       kind: "strengthen-field",
       title: "Threat Actor unspecified",
-      detail: "Even 'unknown — external, financially motivated' is more useful than blank. The engine adjusts dwell-time priors based on actor class.",
-      apply: { field: "actor", appendText: "External attacker, attribution unknown — financially motivated based on observed indicators." },
-      rationale: "Actor class drives dwell-time and persistence priors; omitting it widens the engine's uncertainty band.",
+      detail:
+        "Even 'unknown — external, financially motivated' is more useful than blank. The engine adjusts dwell-time priors based on actor class.",
+      apply: {
+        field: "actor",
+        appendText:
+          "External attacker, attribution unknown — financially motivated based on observed indicators.",
+      },
+      rationale:
+        "Actor class drives dwell-time and persistence priors; omitting it widens the engine's uncertainty band.",
     });
   }
 
@@ -553,7 +650,11 @@ function detectionStatus(state: ScenarioState, tech: Technique): KillChainStep["
   const blindEdr = /no edr|edr.*gap|legacy|jump host/i.test(gaps);
   const blindEgress = /no dlp|egress|outbound/i.test(gaps);
 
-  if (tech.tactic === "credential-access" || tech.tactic === "execution" || tech.tactic === "lateral-movement") {
+  if (
+    tech.tactic === "credential-access" ||
+    tech.tactic === "execution" ||
+    tech.tactic === "lateral-movement"
+  ) {
     if (blindEdr) return "blind";
     return hasEdr ? "likely" : "partial";
   }
@@ -640,9 +741,7 @@ export function toMitreJson(state: ScenarioState, ttpIds: string[]) {
     detection_gaps: state.detection_gaps,
     mitre_attack: ttpIds.map((id) => {
       const t = TECHNIQUES.find((x) => x.id === id);
-      return t
-        ? { technique_id: t.id, name: t.name, tactic: t.tactic }
-        : { technique_id: id };
+      return t ? { technique_id: t.id, name: t.name, tactic: t.tactic } : { technique_id: id };
     }),
   };
 }
@@ -668,7 +767,11 @@ export function toYaml(state: ScenarioState, ttpIds: string[]): string {
   return lines.join("\n");
 }
 
-export function toExecutiveSummary(state: ScenarioState, ttpIds: string[], chain: KillChainSummary): string {
+export function toExecutiveSummary(
+  state: ScenarioState,
+  ttpIds: string[],
+  chain: KillChainSummary,
+): string {
   const dwell = chain.totalDwellHours.toFixed(1);
   const lines = [
     `THREAT SCENARIO — ${state.asset || "[asset]"}`,
@@ -682,7 +785,10 @@ export function toExecutiveSummary(state: ScenarioState, ttpIds: string[], chain
     `Blind spots: ${chain.blindSpots}`,
     "",
     `Kill chain (${ttpIds.length} ATT&CK techniques):`,
-    ...chain.steps.map((s) => `  ${String(s.order).padStart(2, "0")}. ${s.technique.id} ${s.technique.name}  [${s.detected.toUpperCase()}]`),
+    ...chain.steps.map(
+      (s) =>
+        `  ${String(s.order).padStart(2, "0")}. ${s.technique.id} ${s.technique.name}  [${s.detected.toUpperCase()}]`,
+    ),
     "",
     `Expected impact: ${state.impact || "Not specified"}`,
     `Known detection gaps: ${state.detection_gaps || "Not specified"}`,
