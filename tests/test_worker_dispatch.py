@@ -86,3 +86,45 @@ def test_dispatch_parent_and_child_commands(store: RunStore, monkeypatch) -> Non
     assert finished.completed_child_count == 1
     assert finished.idempotency_seen(f"{finished.run_id}:run_parent:p1")
     assert finished.idempotency_seen(f"{finished.run_id}:run_child:c1")
+
+
+def test_duplicate_parent_command_is_skipped(store: RunStore, monkeypatch) -> None:
+    record = store.create_run(
+        run_id="run-worker-dup",
+        correlation_id="run-worker-dup",
+        task_description="Investigate lateral movement in finance segment",
+    )
+    record.parent_configs = [AgentConfig(persona="Network", focus_objective="Trace C2")]
+    record.expected_parent_count = 1
+    store.save(record)
+
+    child = ChildConfig(
+        parent_persona="Network",
+        persona="DNS",
+        focus_objective="Inspect DNS",
+    )
+
+    def fake_parent(_state: dict[str, Any]) -> dict[str, Any]:
+        return {"child_configs": [child]}
+
+    agents = ModuleType("agents")
+    agents.parent_agent_node = fake_parent
+    agents.child_agent_node = lambda _state: {"memos": []}
+    sys.modules["agents"] = agents
+    monkeypatch.setattr("worker.dispatch.publish_artifact", lambda **_: None)
+
+    parent_envelope = build_parent_command(record, record.parent_configs[0], task_id="p1")
+    asyncio.run(dispatch_spawn_envelope(parent_envelope, store=store))
+    asyncio.run(dispatch_spawn_envelope(parent_envelope, store=store))
+
+    updated = store.get_run("run-worker-dup")
+    assert updated.completed_parent_count == 1
+    assert len(updated.child_configs) == 1
+
+
+def test_try_claim_idempotency_is_atomic(store: RunStore) -> None:
+    key = "run-worker-claim:run_parent:t1"
+    assert store.try_claim_idempotency("run-worker-claim", key) is True
+    assert store.try_claim_idempotency("run-worker-claim", key) is False
+    store.release_idempotency_claim("run-worker-claim", key)
+    assert store.try_claim_idempotency("run-worker-claim", key) is True

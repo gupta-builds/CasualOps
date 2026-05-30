@@ -156,6 +156,17 @@ class RunStore:
                 )
                 """
             )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS idempotency_claims (
+                    run_id TEXT NOT NULL,
+                    idempotency_key TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'claimed',
+                    claimed_at TEXT NOT NULL,
+                    PRIMARY KEY (run_id, idempotency_key)
+                )
+                """
+            )
 
     def create_run(
         self,
@@ -295,11 +306,74 @@ class RunStore:
         return len(record.memos)
 
     def mark_idempotent(self, record: RunRecord, key: str) -> None:
-        """Record a processed spawn idempotency key."""
+        """Record a processed spawn idempotency key (legacy helper)."""
 
+        self.complete_idempotency_claim(record.run_id, key, record)
+
+    def try_claim_idempotency(self, run_id: str, key: str) -> bool:
+        """Atomically claim a spawn command; return False if already claimed or completed."""
+
+        if not key:
+            return True
+
+        now = datetime.now(timezone.utc).isoformat()
+        with self._connect() as conn:
+            existing = conn.execute(
+                """
+                SELECT status FROM idempotency_claims
+                WHERE run_id = ? AND idempotency_key = ?
+                """,
+                (run_id, key),
+            ).fetchone()
+            if existing is not None:
+                return False
+            conn.execute(
+                """
+                INSERT INTO idempotency_claims (run_id, idempotency_key, status, claimed_at)
+                VALUES (?, ?, 'claimed', ?)
+                """,
+                (run_id, key, now),
+            )
+            return True
+
+    def complete_idempotency_claim(
+        self,
+        run_id: str,
+        key: str,
+        record: RunRecord,
+    ) -> None:
+        """Mark a claimed spawn command as successfully processed."""
+
+        if not key:
+            return
+
+        with self._connect() as conn:
+            conn.execute(
+                """
+                UPDATE idempotency_claims
+                SET status = 'completed'
+                WHERE run_id = ? AND idempotency_key = ?
+                """,
+                (run_id, key),
+            )
         if key not in record.processed_idempotency_keys:
             record.processed_idempotency_keys.append(key)
         self.save(record)
+
+    def release_idempotency_claim(self, run_id: str, key: str) -> None:
+        """Release an in-flight claim so a retriable failure can be redelivered."""
+
+        if not key:
+            return
+
+        with self._connect() as conn:
+            conn.execute(
+                """
+                DELETE FROM idempotency_claims
+                WHERE run_id = ? AND idempotency_key = ? AND status = 'claimed'
+                """,
+                (run_id, key),
+            )
 
 
 def _record_to_json(record: RunRecord) -> dict[str, Any]:

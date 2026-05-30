@@ -92,7 +92,7 @@ Phase 1b added `bus_summary` counters at publish time to bridge Kafka event coun
 | **2a** Coordinator + run store; replace `graph.ainvoke` | State machine + SQLite; blocking `/run` | Partial (scheduler only) | No | Done |
 | **2b** Spawn-driven fan-out | In-process consumers on `hivemind.spawn`; remove LangGraph `Send` | Yes (fan-out) | No | Done — `src/worker/` |
 | **2c** Async API + frontend | `POST /run` → 202; `GET /run/{run_id}`; SSE terminal + fetch | Yes (full user contract) | Yes | Done |
-| **2d** Pre-PR hardening | Idempotency, DLQ, optional separate `worker` container, docs, smoke | Production-ready | Minimal | Planned |
+| **2d** Pre-PR hardening | Idempotency, DLQ, optional separate `worker` container, docs, smoke | Production-ready | Minimal | Done |
 
 **Phase 2 done** = 2c + 2d acceptance. Only then consider PR to `main`.
 

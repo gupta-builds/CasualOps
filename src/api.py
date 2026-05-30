@@ -43,19 +43,38 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logging.getLogger("dowhy").setLevel(logging.WARNING)
 
+
+def _spawn_worker_enabled() -> bool:
+    return os.getenv("HIVEMIND_ENABLE_SPAWN_WORKER", "0").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    """Start and stop shared Kafka producer and spawn worker with the API."""
+    """Start Kafka producer and optionally the in-process spawn worker."""
 
     set_event_loop(asyncio.get_running_loop())
     await start_producer()
     stop_event = asyncio.Event()
-    worker_task = asyncio.create_task(run_spawn_consumer(stop_event=stop_event))
+    worker_task = None
+    if _spawn_worker_enabled():
+        worker_task = asyncio.create_task(
+            run_spawn_consumer(stop_event=stop_event)
+        )
+        logger.info("In-process spawn worker enabled")
+    else:
+        logger.info(
+            "In-process spawn worker disabled; expect a separate worker service"
+        )
     try:
         yield
     finally:
         stop_event.set()
-        await worker_task
+        if worker_task is not None:
+            await worker_task
         await stop_producer()
 
 

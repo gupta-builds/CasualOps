@@ -35,6 +35,7 @@ services:
     environment:
       HIVEMIND_ALLOWED_ORIGINS: http://localhost:8080,http://127.0.0.1:8080
       KAFKA_BOOTSTRAP: redpanda:9092
+      HIVEMIND_ENABLE_SPAWN_WORKER: "0"
     volumes:
       - ./data:/app/data
     depends_on:
@@ -45,6 +46,25 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+
+  worker:
+    build: .
+    command: sh -c "cd src && python -m worker"
+    env_file:
+      - .env
+    environment:
+      KAFKA_BOOTSTRAP: redpanda:9092
+      HIVEMIND_ENABLE_SPAWN_WORKER: "1"
+      HIVEMIND_SPAWN_MAX_RETRIES: "2"
+      HIVEMIND_SPAWN_RETRY_BACKOFF_MS: "1000"
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    restart: unless-stopped
 
   frontend:
     build: ./app

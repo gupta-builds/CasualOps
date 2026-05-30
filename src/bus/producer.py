@@ -126,11 +126,50 @@ async def publish_envelope(envelope: EventEnvelope) -> None:
 
     topic = topic_for_artifact(envelope.artifact_type)
     payload = envelope_to_bytes(envelope)
-    await _producer.send_and_wait(
-        topic,
-        payload,
-        key=envelope.run_id.encode("utf-8"),
+    await publish_bytes(topic, payload, key=envelope.run_id.encode("utf-8"))
+
+
+async def publish_bytes(
+    topic: str,
+    value: bytes,
+    *,
+    key: bytes | None = None,
+) -> None:
+    """Publish raw bytes to a Kafka topic."""
+
+    if not kafka_enabled():
+        return
+    if _producer is None:
+        logger.warning("Kafka publish skipped: producer not started")
+        return
+
+    await _producer.send_and_wait(topic, value, key=key)
+
+
+def publish_bytes_sync(
+    topic: str,
+    value: bytes,
+    *,
+    key: bytes | None = None,
+) -> None:
+    """Publish raw bytes from sync code via the dedicated worker loop."""
+
+    if not kafka_enabled():
+        return
+
+    loop = _worker_loop
+    if loop is None or not loop.is_running():
+        logger.warning("Kafka publish skipped: worker loop not running")
+        return
+
+    future = asyncio.run_coroutine_threadsafe(
+        publish_bytes(topic, value, key=key),
+        loop,
     )
+    try:
+        future.result(timeout=15)
+    except Exception:
+        logger.exception("Kafka publish failed for topic %s", topic)
 
 
 def publish_envelope_sync(envelope: EventEnvelope) -> None:

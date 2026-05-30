@@ -150,7 +150,17 @@ With Docker Compose, Kafka is enabled automatically via Redpanda:
 KAFKA_BOOTSTRAP=localhost:19092
 ```
 
-Topics: `hivemind.runs`, `hivemind.spawn`, `hivemind.artifacts`, `hivemind.telemetry`.
+Topics: `hivemind.runs`, `hivemind.spawn`, `hivemind.artifacts`, `hivemind.telemetry`, `hivemind.dlq`.
+
+Compose runs three backend processes: **api** (coordinator + SSE, no spawn consumer), **worker** (spawn consumer), and **redpanda**. Both api and worker share `./data` for the SQLite run store.
+
+| Env var | Default (compose) | Purpose |
+|---------|-------------------|---------|
+| `HIVEMIND_ENABLE_SPAWN_WORKER` | `0` on api, `1` on worker | In-process spawn consumer in api when `1` |
+| `HIVEMIND_SPAWN_MAX_RETRIES` | `2` | Dispatch retries before DLQ |
+| `HIVEMIND_SPAWN_RETRY_BACKOFF_MS` | `1000` | Delay between spawn retries |
+
+For single-process local dev without the worker container, set `HIVEMIND_ENABLE_SPAWN_WORKER=1` on the api service.
 
 Live UI progress uses SSE. The frontend generates a `run_id`, opens
 `GET /run/{run_id}/events`, then calls `POST /run` with the same id. If

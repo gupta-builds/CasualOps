@@ -22,7 +22,7 @@ from bus.helpers import bind_from_state
 from bus.producer import set_event_loop
 from bus.publish import publish_run_event, publish_telemetry
 from coordinator.runner import execute_run
-from coordinator.store import get_run_store
+from coordinator.store import RunRecord, get_run_store
 from demo_fixtures import is_demo_evidence, resolve_run_evidence
 
 DATA_DIR = Path("../data")
@@ -80,7 +80,11 @@ async def run_hivemind(
             run_id=resolved_run_id,
             correlation_id=correlation_id,
         )
-        bus_summary = get_run_summary()
+        try:
+            record = get_run_store().get_run(resolved_run_id)
+            bus_summary = _bus_summary_from_record(record)
+        except KeyError:
+            bus_summary = get_run_summary()
     except Exception as exc:
         bind_from_state(initial_state)
         publish_run_event("failed", detail=str(exc))
@@ -173,6 +177,19 @@ def load_run_artifact(run_id: str) -> dict[str, Any] | None:
         return None
     with artifact_path.open(encoding="utf-8") as handle:
         return json.load(handle)
+
+
+def _bus_summary_from_record(record: RunRecord) -> dict[str, Any]:
+    """Derive bus_summary counters from durable run store state."""
+
+    return {
+        "parent_config_count": len(record.parent_configs),
+        "child_config_count": len(record.child_configs),
+        "memo_count": len(record.memos),
+        "has_ranked_strategies": bool(record.ranked_strategies),
+        "has_causal_payload": record.causal_payload is not None,
+        "has_estimate_report": record.causal_estimate_report is not None,
+    }
 
 
 def _strategy_card(index: int, memo: dict[str, Any]) -> dict[str, Any]:

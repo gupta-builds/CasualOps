@@ -10,7 +10,6 @@ from bus.context import bind_run_context
 from bus.events import ArtifactType, EventEnvelope
 from bus.publish import publish_artifact
 from coordinator.store import RunStore, get_run_store
-from coordinator.store import RunStore
 from schema import ChildState, ParentState
 
 logger = logging.getLogger(__name__)
@@ -37,6 +36,12 @@ async def dispatch_spawn_envelope(
     )
 
 
+def idempotency_key_from_envelope(envelope: EventEnvelope) -> str:
+    """Return the spawn command idempotency key, if any."""
+
+    return str(envelope.payload.get("idempotency_key", "") or "")
+
+
 async def _dispatch_parent(
     envelope: EventEnvelope,
     *,
@@ -46,26 +51,39 @@ async def _dispatch_parent(
 
     run_store = store or get_run_store()
     payload = envelope.payload
-    idempotency_key = str(payload.get("idempotency_key", ""))
+    idempotency_key = idempotency_key_from_envelope(envelope)
     record = run_store.get_run(envelope.run_id)
-    if idempotency_key and record.idempotency_seen(idempotency_key):
+    if idempotency_key and not run_store.try_claim_idempotency(
+        envelope.run_id, idempotency_key
+    ):
         logger.info("Skipping duplicate RUN_PARENT %s", idempotency_key)
         return
 
-    parent_state: ParentState = {
-        "task_description": str(payload.get("task_description", record.task_description)),
-        "run_id": envelope.run_id,
-        "correlation_id": envelope.correlation_id,
-        "persona": str(payload["persona"]),
-        "focus_objective": str(payload["focus_objective"]),
-    }
-    update = await asyncio.to_thread(parent_agent_node, parent_state)
-    configs = list(update.get("child_configs", []))
-    run_store.append_child_configs(record, configs)
-    if idempotency_key:
-        run_store.mark_idempotent(record, idempotency_key)
-    run_store.mark_parent_complete(record)
-    _publish_task_completed(envelope, payload, {"child_config_count": len(configs)})
+    try:
+        parent_state: ParentState = {
+            "task_description": str(
+                payload.get("task_description", record.task_description)
+            ),
+            "run_id": envelope.run_id,
+            "correlation_id": envelope.correlation_id,
+            "persona": str(payload["persona"]),
+            "focus_objective": str(payload["focus_objective"]),
+        }
+        update = await asyncio.to_thread(parent_agent_node, parent_state)
+        configs = list(update.get("child_configs", []))
+        run_store.append_child_configs(record, configs)
+        if idempotency_key:
+            run_store.complete_idempotency_claim(
+                envelope.run_id, idempotency_key, record
+            )
+        run_store.mark_parent_complete(record)
+        _publish_task_completed(
+            envelope, payload, {"child_config_count": len(configs)}
+        )
+    except Exception:
+        if idempotency_key:
+            run_store.release_idempotency_claim(envelope.run_id, idempotency_key)
+        raise
 
 
 async def _dispatch_child(
@@ -77,28 +95,39 @@ async def _dispatch_child(
 
     run_store = store or get_run_store()
     payload = envelope.payload
-    idempotency_key = str(payload.get("idempotency_key", ""))
+    idempotency_key = idempotency_key_from_envelope(envelope)
     record = run_store.get_run(envelope.run_id)
-    if idempotency_key and record.idempotency_seen(idempotency_key):
+    if idempotency_key and not run_store.try_claim_idempotency(
+        envelope.run_id, idempotency_key
+    ):
         logger.info("Skipping duplicate RUN_CHILD %s", idempotency_key)
         return
 
-    child_state: ChildState = {
-        "task_description": str(payload.get("task_description", record.task_description)),
-        "run_id": envelope.run_id,
-        "correlation_id": envelope.correlation_id,
-        "parent_persona": str(payload["parent_persona"]),
-        "persona": str(payload["persona"]),
-        "focus_objective": str(payload["focus_objective"]),
-    }
-    update = await asyncio.to_thread(child_agent_node, child_state)
-    memos = list(update.get("memos", []))
-    for memo in memos:
-        run_store.append_memo(record, memo)
-    if idempotency_key:
-        run_store.mark_idempotent(record, idempotency_key)
-    run_store.mark_child_complete(record)
-    _publish_task_completed(envelope, payload, {"memo_count": len(memos)})
+    try:
+        child_state: ChildState = {
+            "task_description": str(
+                payload.get("task_description", record.task_description)
+            ),
+            "run_id": envelope.run_id,
+            "correlation_id": envelope.correlation_id,
+            "parent_persona": str(payload["parent_persona"]),
+            "persona": str(payload["persona"]),
+            "focus_objective": str(payload["focus_objective"]),
+        }
+        update = await asyncio.to_thread(child_agent_node, child_state)
+        memos = list(update.get("memos", []))
+        for memo in memos:
+            run_store.append_memo(record, memo)
+        if idempotency_key:
+            run_store.complete_idempotency_claim(
+                envelope.run_id, idempotency_key, record
+            )
+        run_store.mark_child_complete(record)
+        _publish_task_completed(envelope, payload, {"memo_count": len(memos)})
+    except Exception:
+        if idempotency_key:
+            run_store.release_idempotency_claim(envelope.run_id, idempotency_key)
+        raise
 
 
 def _publish_task_completed(

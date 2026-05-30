@@ -9,6 +9,7 @@ TOPIC_SPAWN = "hivemind.spawn"
 TOPIC_ARTIFACTS = "hivemind.artifacts"
 TOPIC_TELEMETRY = "hivemind.telemetry"
 TOPIC_EVIDENCE = "hivemind.evidence"
+TOPIC_DLQ = "hivemind.dlq"
 
 _ALL_TOPICS = (
     TOPIC_RUNS,
@@ -16,6 +17,7 @@ _ALL_TOPICS = (
     TOPIC_ARTIFACTS,
     TOPIC_TELEMETRY,
     TOPIC_EVIDENCE,
+    TOPIC_DLQ,
 )
 
 
