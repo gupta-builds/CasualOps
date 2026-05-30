@@ -28,7 +28,12 @@ def topic_for_artifact(artifact_type: ArtifactType) -> str:
         ArtifactType.RUN_FAILED,
     ):
         return TOPIC_RUNS
-    if artifact_type in (ArtifactType.AGENT_CONFIG, ArtifactType.CHILD_CONFIG):
+    if artifact_type in (
+        ArtifactType.AGENT_CONFIG,
+        ArtifactType.CHILD_CONFIG,
+        ArtifactType.RUN_PARENT,
+        ArtifactType.RUN_CHILD,
+    ):
         return TOPIC_SPAWN
     if artifact_type == ArtifactType.EXECUTION_PHASE:
         return TOPIC_TELEMETRY

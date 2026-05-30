@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field
 
 from bus.consumer import stream_telemetry
 from bus.producer import set_event_loop, start_producer, stop_producer
+from worker.consumer import run_spawn_consumer
 
 from dataset_compiler import compile_evidence_dataset
 from demo_fixtures import (
@@ -43,13 +44,17 @@ logging.getLogger("dowhy").setLevel(logging.WARNING)
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    """Start and stop shared Kafka producer with the API process."""
+    """Start and stop shared Kafka producer and spawn worker with the API."""
 
     set_event_loop(asyncio.get_running_loop())
     await start_producer()
+    stop_event = asyncio.Event()
+    worker_task = asyncio.create_task(run_spawn_consumer(stop_event=stop_event))
     try:
         yield
     finally:
+        stop_event.set()
+        await worker_task
         await stop_producer()
 
 

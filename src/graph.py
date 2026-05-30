@@ -1,4 +1,9 @@
-"""LangGraph assembly for HiveMind's investigation and causal workflow."""
+"""LangGraph assembly for HiveMind's investigation and causal workflow.
+
+Deprecated for execution in Phase 2b+: the coordinator + spawn workers drive
+parent/child fan-out. This module remains for reference and refutation routing
+used during migration tests.
+"""
 
 from __future__ import annotations
 
@@ -76,17 +81,9 @@ def conditional_refutation_check(
 ) -> Literal["end", "causal_synthesis"]:
     """Stop when refuters pass or when estimation is explicitly withheld."""
 
-    estimate_report = state.get("causal_estimate_report") or {}
-    method = str(estimate_report.get("method", ""))
-    attempts = state.get("causal_refutation_attempts", 0)
-    if state.get("causal_refutation_passed", False) or method.startswith("withheld:"):
-        return "end"
-    if attempts >= 2:
-        logger.info("Refutation failed after %s attempt(s); ending run", attempts)
-        return "end"
+    from coordinator.refutation import refutation_next_step
 
-    logger.info("Refutation failed; retrying causal synthesis")
-    return "causal_synthesis"
+    return refutation_next_step(state)
 
 
 def build_graph():

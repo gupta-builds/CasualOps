@@ -61,6 +61,27 @@ def publish_spawn(
     )
 
 
+def publish_work_command(
+    *,
+    agent_id: str,
+    tier: Tier,
+    artifact_type: ArtifactType,
+    payload: dict[str, Any],
+) -> None:
+    """Publish an executable parent/child work command to hivemind.spawn."""
+
+    if artifact_type not in (ArtifactType.RUN_PARENT, ArtifactType.RUN_CHILD):
+        raise ValueError(
+            f"publish_work_command expected run_parent or run_child, got {artifact_type}"
+        )
+    _emit(
+        agent_id=agent_id,
+        tier=tier,
+        artifact_type=artifact_type,
+        payload=payload,
+    )
+
+
 def publish_artifact(
     *,
     agent_id: str,

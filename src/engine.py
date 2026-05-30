@@ -1,8 +1,9 @@
 """Execution engine for HiveMind runs.
 
 This module is the backend boundary used by the HTTP API and the legacy
-Streamlit demo. It runs the LangGraph workflow, composes a frontend-friendly
-artifact, emits deterministic tier metrics, and persists the full run record.
+Streamlit demo. It runs the Phase 2 coordinator workflow, composes a
+frontend-friendly artifact, emits deterministic tier metrics, and persists
+the full run record.
 """
 
 from __future__ import annotations
@@ -20,7 +21,7 @@ from bus.context import bind_run_context, clear_run_context, get_run_summary
 from bus.helpers import bind_from_state
 from bus.producer import set_event_loop
 from bus.publish import publish_run_event, publish_telemetry
-from graph import build_graph
+from coordinator.runner import execute_run
 
 DATA_DIR = Path("../data")
 
@@ -52,24 +53,11 @@ async def run_hivemind(
     bind_run_context(resolved_run_id, correlation_id)
     set_event_loop(asyncio.get_running_loop())
 
-    graph = build_graph()
     initial_state = {
         "task_description": task_description,
         "run_id": resolved_run_id,
         "correlation_id": correlation_id,
-        "parent_configs": [],
-        "child_configs": [],
-        "memos": [],
-        "ranked_strategies": [],
-        "final_recommendation": None,
-        "evaluator_error": None,
-        "causal_payload": None,
-        "dowhy_results": None,
-        "causal_refutation_passed": False,
-        "causal_refutation_attempts": 0,
         "evidence_records": evidence_records or [],
-        "causal_dataset_profile": None,
-        "causal_estimate_report": None,
     }
 
     publish_run_event("started")
@@ -83,7 +71,12 @@ async def run_hivemind(
 
     bus_summary: dict[str, Any] = {}
     try:
-        final_state = await graph.ainvoke(initial_state)
+        final_state = await execute_run(
+            task_description=task_description,
+            evidence_records=evidence_records,
+            run_id=resolved_run_id,
+            correlation_id=correlation_id,
+        )
         bus_summary = get_run_summary()
     except Exception as exc:
         bind_from_state(initial_state)

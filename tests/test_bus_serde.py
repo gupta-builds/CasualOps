@@ -46,6 +46,8 @@ def test_envelope_round_trip() -> None:
     [
         (ArtifactType.RUN_STARTED, TOPIC_RUNS),
         (ArtifactType.AGENT_CONFIG, TOPIC_SPAWN),
+        (ArtifactType.RUN_PARENT, TOPIC_SPAWN),
+        (ArtifactType.RUN_CHILD, TOPIC_SPAWN),
         (ArtifactType.DECISION_MEMO, TOPIC_ARTIFACTS),
         (ArtifactType.EXECUTION_PHASE, TOPIC_TELEMETRY),
     ],

@@ -24,6 +24,9 @@ class ArtifactType(str, Enum):
 
     AGENT_CONFIG = "agent_config"
     CHILD_CONFIG = "child_config"
+    RUN_PARENT = "run_parent"
+    RUN_CHILD = "run_child"
+    TASK_COMPLETED = "task_completed"
     DECISION_MEMO = "decision_memo"
     RANKED_STRATEGIES = "ranked_strategies"
     CAUSAL_PAYLOAD = "causal_payload"

@@ -9,7 +9,7 @@ API_URL="${API_URL:-http://localhost:8000}"
 COMPOSE="${COMPOSE:-docker compose}"
 
 echo "==> Bus serde tests"
-PYTHONPATH=src python3 -m pytest tests/test_bus_serde.py tests/test_bus_summary.py tests/test_bus_kafka_off.py -q
+PYTHONPATH=src python3 -m pytest tests/test_bus_serde.py tests/test_bus_summary.py tests/test_bus_kafka_off.py tests/test_coordinator_store.py tests/test_coordinator_refutation.py tests/test_coordinator_runner.py tests/test_worker_dispatch.py -q
 
 echo "==> API health"
 curl -sf "${API_URL}/health" | grep -q '"status":"ok"'
