@@ -214,14 +214,30 @@ def child_agent_node(state: ChildState) -> dict[str, list[DecisionMemo]]:
     )
 
     logger.info("Child agent [%s] synthesizing memo", state["persona"])
-    memo = child_agent_chain.invoke(
-        {
-            "persona": state["persona"],
-            "parent_persona": state["parent_persona"],
-            "focus_objective": state["focus_objective"],
-            "task_description": state["task_description"],
-        }
-    )
+    try:
+        memo = child_agent_chain.invoke(
+            {
+                "persona": state["persona"],
+                "parent_persona": state["parent_persona"],
+                "focus_objective": state["focus_objective"],
+                "task_description": state["task_description"],
+            }
+        )
+    except Exception as exc:
+        error_name = type(exc).__name__
+        if "ContentFilter" in error_name:
+            message = (
+                f"Child [{state['persona']}] blocked by content filter: {exc}"
+            )
+            logger.error(message)
+            publish_telemetry(
+                agent_id=agent_id,
+                tier="child",
+                phase="ERROR",
+                message=message,
+                status="error",
+            )
+        raise
     logger.info("Child agent [%s] completed memo", state["persona"])
 
     publish_artifact(

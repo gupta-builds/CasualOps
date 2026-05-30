@@ -16,7 +16,20 @@ export async function executeWithProgress(
 ): Promise<RunResponse> {
   const runId = newRunId();
   const controller = new AbortController();
-  const stopStream = streamRunEvents(runId, onEvent, controller.signal);
+  const stopStream = streamRunEvents(
+    runId,
+    onEvent,
+    controller.signal,
+    (message) => {
+      onEvent({
+        id: uid(),
+        phase: "ERROR",
+        message,
+        status: "error",
+        ts: Date.now(),
+      });
+    },
+  );
 
   try {
     return await runCausalEngine(taskDescription, { runId });

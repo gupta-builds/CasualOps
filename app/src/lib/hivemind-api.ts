@@ -68,9 +68,11 @@ export function streamRunEvents(
   runId: string,
   onEvent: (event: ExecutionEvent) => void,
   signal?: AbortSignal,
+  onError?: (message: string) => void,
 ): () => void {
   const url = `${getApiBase()}/run/${encodeURIComponent(runId)}/events`;
   const source = new EventSource(url);
+  let reportedError = false;
 
   const onMessage = (message: MessageEvent<string>) => {
     try {
@@ -81,10 +83,20 @@ export function streamRunEvents(
     }
   };
 
+  const onStreamError = () => {
+    if (reportedError || source.readyState === EventSource.CLOSED) return;
+    reportedError = true;
+    onError?.(
+      "Lost connection to execution stream. Check that the API is running and KAFKA_BOOTSTRAP is set.",
+    );
+  };
+
   source.addEventListener("message", onMessage as EventListener);
+  source.onerror = onStreamError;
 
   const abort = () => {
     source.removeEventListener("message", onMessage as EventListener);
+    source.onerror = null;
     source.close();
   };
 
