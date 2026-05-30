@@ -28,6 +28,7 @@ def _emit(
 ) -> None:
     run_id, correlation_id, ctx = _require_context()
     sequence = ctx.next_sequence(agent_id)
+    ctx.summary.record(artifact_type)
     envelope = EventEnvelope(
         run_id=run_id,
         correlation_id=correlation_id,

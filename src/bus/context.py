@@ -5,6 +5,8 @@ from __future__ import annotations
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 
+from bus.summary import RunBusSummary
+
 
 @dataclass
 class RunPublishContext:
@@ -13,6 +15,7 @@ class RunPublishContext:
     run_id: str
     correlation_id: str
     _sequences: dict[str, int] = field(default_factory=dict)
+    summary: RunBusSummary = field(default_factory=RunBusSummary)
 
     def next_sequence(self, agent_id: str) -> int:
         current = self._sequences.get(agent_id, 0)
@@ -41,6 +44,15 @@ def get_run_context() -> RunPublishContext | None:
     """Return the active run context, if any."""
 
     return _run_context.get()
+
+
+def get_run_summary() -> dict[str, int | bool]:
+    """Return bus artifact counters for the active run, or empty defaults."""
+
+    ctx = get_run_context()
+    if ctx is None:
+        return RunBusSummary().to_dict()
+    return ctx.summary.to_dict()
 
 
 def clear_run_context() -> None:
