@@ -166,7 +166,9 @@ function buildGraph(
     { id: "entry", label: compactLabel(fields.vector || "Initial access opportunity") },
   ];
 
-  const edges: CausalEdge[] = [{ source: "intent", target: "entry", relationship: "selects viable entry path" }];
+  const edges: CausalEdge[] = [
+    { source: "intent", target: "entry", relationship: "selects viable entry path" },
+  ];
 
   let previous = "entry";
   for (const tech of techniques) {
@@ -180,7 +182,11 @@ function buildGraph(
     id: "impact",
     label: compactLabel(fields.impact || fields.asset || taskDescription),
   });
-  edges.push({ source: previous, target: "impact", relationship: "causally increases business impact" });
+  edges.push({
+    source: previous,
+    target: "impact",
+    relationship: "causally increases business impact",
+  });
 
   return { nodes, edges };
 }
@@ -192,9 +198,11 @@ function buildStrategies(
   rand: () => number,
 ): Strategy[] {
   const tactics = new Set<TacticId>(techniques.map((tech) => tech.tactic));
-  const hasIdentity = tactics.has("credential-access") || /sso|entra|okta|session|credential/i.test(taskDescription);
+  const hasIdentity =
+    tactics.has("credential-access") || /sso|entra|okta|session|credential/i.test(taskDescription);
   const hasExfil = tactics.has("exfiltration") || /exfil|leak|dlp|data/i.test(taskDescription);
-  const hasImpact = tactics.has("impact") || /ransom|encrypt|destruct|outage/i.test(taskDescription);
+  const hasImpact =
+    tactics.has("impact") || /ransom|encrypt|destruct|outage/i.test(taskDescription);
 
   const strategies: Strategy[] = [
     scoreStrategy(
@@ -206,7 +214,9 @@ function buildStrategies(
       rand,
     ),
     scoreStrategy(
-      hasIdentity ? "Revoke sessions and constrain privilege edges" : "Constrain lateral movement blast radius",
+      hasIdentity
+        ? "Revoke sessions and constrain privilege edges"
+        : "Constrain lateral movement blast radius",
       hasIdentity
         ? "Invalidate active sessions, rotate privileged credentials, and force phishing-resistant re-auth for impacted trust zones."
         : "Apply temporary segmentation between impacted hosts and crown-jewel services while preserving analyst access paths.",
@@ -216,7 +226,9 @@ function buildStrategies(
       rand,
     ),
     scoreStrategy(
-      hasExfil ? "Instrument egress chokepoints and stage legal hold" : "Increase telemetry on weak causal links",
+      hasExfil
+        ? "Instrument egress chokepoints and stage legal hold"
+        : "Increase telemetry on weak causal links",
       hasExfil
         ? "Enable high-sensitivity DLP/CASB detections for the named asset and retain outbound transfer evidence for regulator review."
         : `Close the stated blind spot (${fields.gaps || "unknown detection gap"}) before trusting inferred graph edges.`,
@@ -226,7 +238,9 @@ function buildStrategies(
       rand,
     ),
     scoreStrategy(
-      hasImpact ? "Stage recovery cutover and backup integrity checks" : "Run counterfactual validation before eradication",
+      hasImpact
+        ? "Stage recovery cutover and backup integrity checks"
+        : "Run counterfactual validation before eradication",
       hasImpact
         ? "Validate restore points, isolate backup control planes, and pre-authorize a cutover window for the impacted business service."
         : "Test whether removing the highest-confidence edge breaks the projected attack path before committing disruptive controls.",
@@ -282,7 +296,10 @@ function compactLabel(value: string): string {
 }
 
 function nodeId(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
 }
 
 function clamp01(value: number): number {

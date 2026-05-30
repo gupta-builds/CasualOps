@@ -10,10 +10,7 @@ function wrap(doc: jsPDF, text: string, maxWidth: number): string[] {
   return doc.splitTextToSize(text, maxWidth) as string[];
 }
 
-export async function exportRunReport(
-  entry: HistoryEntry,
-  graphCanvas: HTMLCanvasElement | null,
-) {
+export async function exportRunReport(entry: HistoryEntry, graphCanvas: HTMLCanvasElement | null) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();

@@ -67,12 +67,16 @@ export function CausalObservabilityPanel({ trace }: Props) {
   const toggleCollapse = (id: string) => {
     setCollapsed((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   };
 
-  const selected = selectedAgentId ? agentById.get(selectedAgentId) ?? null : null;
+  const selected = selectedAgentId ? (agentById.get(selectedAgentId) ?? null) : null;
 
   // Counts for tab badges
   const counts = useMemo(() => {
@@ -283,12 +287,7 @@ function TreeNode({
   const isCollapsed = collapsed.has(node.id);
   const isRejected = node.status === "rejected";
 
-  const Icon =
-    node.level === "orchestrator"
-      ? Crown
-      : node.level === "domain"
-        ? Layers
-        : Brain;
+  const Icon = node.level === "orchestrator" ? Crown : node.level === "domain" ? Layers : Brain;
 
   const tone =
     node.level === "orchestrator"
@@ -304,9 +303,7 @@ function TreeNode({
         onClick={() => onSelect(node.id)}
         className={cn(
           "group flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-xs transition-colors",
-          isSelected
-            ? "bg-white/10 text-foreground"
-            : "text-foreground/85 hover:bg-white/5",
+          isSelected ? "bg-white/10 text-foreground" : "text-foreground/85 hover:bg-white/5",
           isRejected && "opacity-50",
         )}
         style={{ paddingLeft: 8 + depth * 18 }}
@@ -335,7 +332,11 @@ function TreeNode({
           style={{ color: isRejected ? "rgba(255,255,255,0.4)" : `oklch(${tone})` }}
         />
         <span className="flex-1 truncate">
-          {isRejected && <span className="mr-1 text-[10px] uppercase tracking-wider text-rose-300/70">[rejected]</span>}
+          {isRejected && (
+            <span className="mr-1 text-[10px] uppercase tracking-wider text-rose-300/70">
+              [rejected]
+            </span>
+          )}
           {node.label}
         </span>
         {node.status === "active" && (
@@ -402,8 +403,7 @@ function AgentInspector({
     );
   }
 
-  const Icon =
-    agent.level === "orchestrator" ? Crown : agent.level === "domain" ? Layers : Brain;
+  const Icon = agent.level === "orchestrator" ? Crown : agent.level === "domain" ? Layers : Brain;
 
   return (
     <div className="flex h-full flex-col">
@@ -470,9 +470,7 @@ function AgentInspector({
 
         {agent.parentId && (
           <Field label="Spawned by">
-            <p className="font-mono text-[11px] text-[color:var(--neon-cyan)]">
-              {agent.parentId}
-            </p>
+            <p className="font-mono text-[11px] text-[color:var(--neon-cyan)]">{agent.parentId}</p>
           </Field>
         )}
 
@@ -700,16 +698,23 @@ function DecisionLogView({
       {/* Log */}
       <div className="max-h-[420px] overflow-auto bg-[oklch(0.16_0.03_260/0.6)] px-4 py-3 font-mono text-[11px]">
         {visible.length === 0 ? (
-          <p className="py-8 text-center text-muted-foreground">// no events at t+{Math.round(t)}ms</p>
+          <p className="py-8 text-center text-muted-foreground">
+            // no events at t+{Math.round(t)}ms
+          </p>
         ) : (
           <ul className="space-y-1">
             {visible.map((e, i) => {
               const agent = agentById.get(e.agentId);
               return (
                 <li key={i} className="flex items-start gap-2">
-                  <span className="shrink-0 text-muted-foreground/70">[t+{String(e.tMs).padStart(5, " ")}ms]</span>
+                  <span className="shrink-0 text-muted-foreground/70">
+                    [t+{String(e.tMs).padStart(5, " ")}ms]
+                  </span>
                   <KindIcon kind={e.kind} />
-                  <span className="shrink-0 font-semibold uppercase tracking-wider" style={{ color: kindColor(e.kind) }}>
+                  <span
+                    className="shrink-0 font-semibold uppercase tracking-wider"
+                    style={{ color: kindColor(e.kind) }}
+                  >
                     {e.kind}
                   </span>
                   <span className="text-muted-foreground/40">·</span>
@@ -833,51 +838,49 @@ function ValidationView({ trace }: { trace: ObservabilityTrace }) {
           <Target className="h-3 w-3 text-[color:var(--neon-violet)]" />
           Inferred vs. validated relationships
         </div>
-        {(["telemetry", "external_intel", "model_inferred", "heuristic"] as const).map(
-          (type) => {
-            const items = groups.get(type) ?? [];
-            const isValidated = type === "telemetry" || type === "external_intel";
-            return (
-              <div key={type} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ background: `oklch(${evidenceColor(type)})` }}
-                    />
-                    <span className="font-mono uppercase tracking-wider text-foreground/85">
-                      {evidenceLabel(type)}
-                    </span>
-                    <span
-                      className={cn(
-                        "rounded-full border px-1.5 py-0 font-mono text-[9px] uppercase tracking-wider",
-                        isValidated
-                          ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"
-                          : "border-amber-400/40 bg-amber-400/10 text-amber-300",
-                      )}
-                    >
-                      {isValidated ? "validated" : "inferred"}
-                    </span>
-                  </span>
-                  <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
-                    {items.length} edge{items.length === 1 ? "" : "s"}
-                  </span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-white/5">
-                  <div
-                    className="h-full"
-                    style={{
-                      width: trace.edges.length
-                        ? `${(items.length / trace.edges.length) * 100}%`
-                        : "0%",
-                      background: `oklch(${evidenceColor(type)})`,
-                    }}
+        {(["telemetry", "external_intel", "model_inferred", "heuristic"] as const).map((type) => {
+          const items = groups.get(type) ?? [];
+          const isValidated = type === "telemetry" || type === "external_intel";
+          return (
+            <div key={type} className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ background: `oklch(${evidenceColor(type)})` }}
                   />
-                </div>
+                  <span className="font-mono uppercase tracking-wider text-foreground/85">
+                    {evidenceLabel(type)}
+                  </span>
+                  <span
+                    className={cn(
+                      "rounded-full border px-1.5 py-0 font-mono text-[9px] uppercase tracking-wider",
+                      isValidated
+                        ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"
+                        : "border-amber-400/40 bg-amber-400/10 text-amber-300",
+                    )}
+                  >
+                    {isValidated ? "validated" : "inferred"}
+                  </span>
+                </span>
+                <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+                  {items.length} edge{items.length === 1 ? "" : "s"}
+                </span>
               </div>
-            );
-          },
-        )}
+              <div className="h-1.5 overflow-hidden rounded-full bg-white/5">
+                <div
+                  className="h-full"
+                  style={{
+                    width: trace.edges.length
+                      ? `${(items.length / trace.edges.length) * 100}%`
+                      : "0%",
+                    background: `oklch(${evidenceColor(type)})`,
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
 
         <p className="border-t border-white/5 pt-3 font-mono text-[10px] leading-relaxed text-muted-foreground">
           The system distinguishes <span className="text-emerald-300">statistically validated</span>{" "}
@@ -961,9 +964,7 @@ function RejectedView({ trace }: { trace: ObservabilityTrace }) {
             >
               <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-300" />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-foreground/95">
-                  {domainLabel(r.domain)}
-                </p>
+                <p className="text-sm font-semibold text-foreground/95">{domainLabel(r.domain)}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">{r.reason}</p>
               </div>
               <span className="rounded border border-rose-400/40 bg-rose-400/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-rose-300">

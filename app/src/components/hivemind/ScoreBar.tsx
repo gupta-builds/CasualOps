@@ -44,7 +44,10 @@ export function ScoreBar({ label, value, icon: Icon, tone }: ScoreBarProps) {
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
         <div
-          className={cn("h-full rounded-full bg-gradient-to-r transition-all duration-700", styles.bar)}
+          className={cn(
+            "h-full rounded-full bg-gradient-to-r transition-all duration-700",
+            styles.bar,
+          )}
           style={{ width: `${pct}%` }}
         />
       </div>

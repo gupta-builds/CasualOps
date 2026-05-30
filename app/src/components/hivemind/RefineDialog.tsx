@@ -16,7 +16,13 @@ interface RefineDialogProps {
   onApply: () => void;
 }
 
-export function RefineDialog({ open, onOpenChange, original, refined, onApply }: RefineDialogProps) {
+export function RefineDialog({
+  open,
+  onOpenChange,
+  original,
+  refined,
+  onApply,
+}: RefineDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl border-white/10 bg-[oklch(0.13_0.025_260)] text-foreground">

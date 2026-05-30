@@ -12,12 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import {
-  DEFAULT_API_URL,
-  clearApiUrl,
-  getApiUrl,
-  setApiUrl,
-} from "@/lib/hivemind-api";
+import { DEFAULT_API_URL, clearApiUrl, getApiUrl, setApiUrl } from "@/lib/hivemind-api";
 import { cn } from "@/lib/utils";
 
 interface ApiSettingsDialogProps {
@@ -93,13 +88,16 @@ export function ApiSettingsDialog({ open, onOpenChange, onChange }: ApiSettingsD
             Backend Endpoint
           </DialogTitle>
           <DialogDescription>
-            HiveMind runs against the built-in backend by default. Override this only if you
-            want to point execution at your own public causal engine endpoint.
+            HiveMind runs against the built-in backend by default. Override this only if you want to
+            point execution at your own public causal engine endpoint.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
-          <Label htmlFor="api-url" className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+          <Label
+            htmlFor="api-url"
+            className="text-xs uppercase tracking-[0.2em] text-muted-foreground"
+          >
             API URL
           </Label>
           <Input
@@ -115,17 +113,15 @@ export function ApiSettingsDialog({ open, onOpenChange, onChange }: ApiSettingsD
             autoComplete="off"
           />
           <p className="text-[11px] text-muted-foreground">
-            We&apos;ll append <code className="font-mono">/run</code> automatically for external hosts.
-            Default: <code className="font-mono">{DEFAULT_API_URL}</code>
+            We&apos;ll append <code className="font-mono">/run</code> automatically for external
+            hosts. Default: <code className="font-mono">{DEFAULT_API_URL}</code>
           </p>
 
           <div
             className={cn(
               "flex items-center gap-2 rounded-md border px-3 py-2 text-xs transition-colors",
-              probe.status === "ok" &&
-                "border-emerald-400/30 bg-emerald-400/5 text-emerald-300",
-              probe.status === "error" &&
-                "border-rose-400/30 bg-rose-400/5 text-rose-300",
+              probe.status === "ok" && "border-emerald-400/30 bg-emerald-400/5 text-emerald-300",
+              probe.status === "error" && "border-rose-400/30 bg-rose-400/5 text-rose-300",
               (probe.status === "idle" || probe.status === "probing") &&
                 "border-white/10 bg-white/[0.02] text-muted-foreground",
             )}

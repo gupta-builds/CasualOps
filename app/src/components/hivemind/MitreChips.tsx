@@ -1,11 +1,7 @@
 import { Plus, X } from "lucide-react";
 import { TECHNIQUES, tacticById, sortByTactic } from "@/lib/mitre-catalog";
 import { cn } from "@/lib/utils";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useState } from "react";
 
 interface Props {

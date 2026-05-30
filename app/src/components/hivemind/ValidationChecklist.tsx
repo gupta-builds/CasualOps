@@ -1,4 +1,12 @@
-import { AlertCircle, AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Info, Wrench } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  Info,
+  Wrench,
+} from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { ValidationIssue, ValidationResult } from "@/lib/scenario-validation";
@@ -59,11 +67,7 @@ export function ValidationChecklist({ result, onJumpToField, onApplyFix }: Props
             <span
               className={cn(
                 "tabular-nums",
-                score >= 90
-                  ? "text-emerald-300"
-                  : score >= 70
-                    ? "text-amber-300"
-                    : "text-rose-300",
+                score >= 90 ? "text-emerald-300" : score >= 70 ? "text-amber-300" : "text-rose-300",
               )}
             >
               {score}
@@ -74,11 +78,7 @@ export function ValidationChecklist({ result, onJumpToField, onApplyFix }: Props
             <span
               className={cn(
                 "block h-full rounded-full transition-all",
-                score >= 90
-                  ? "bg-emerald-400"
-                  : score >= 70
-                    ? "bg-amber-400"
-                    : "bg-rose-400",
+                score >= 90 ? "bg-emerald-400" : score >= 70 ? "bg-amber-400" : "bg-rose-400",
               )}
               style={{ width: `${score}%` }}
             />
@@ -136,9 +136,7 @@ function ChecklistRow({
             chip: "border-cyan-400/30 bg-cyan-500/10 text-cyan-200",
           };
 
-  const canApply = Boolean(
-    onApplyFix && (issue.addTtpIds || issue.removeTtpIds),
-  );
+  const canApply = Boolean(onApplyFix && (issue.addTtpIds || issue.removeTtpIds));
 
   return (
     <li className="flex items-start gap-2 rounded-md border border-white/5 bg-white/[0.02] px-2.5 py-1.5">
@@ -155,9 +153,7 @@ function ChecklistRow({
           </span>
           <span className="text-[11px] font-medium text-foreground/95">{issue.title}</span>
         </div>
-        <p className="mt-0.5 text-[10.5px] leading-snug text-muted-foreground">
-          {issue.detail}
-        </p>
+        <p className="mt-0.5 text-[10.5px] leading-snug text-muted-foreground">{issue.detail}</p>
         <p className="mt-0.5 flex items-start gap-1 text-[10.5px] leading-snug text-foreground/80">
           <Wrench className="mt-0.5 h-2.5 w-2.5 shrink-0 text-[color:var(--neon-cyan)]/70" />
           <span>

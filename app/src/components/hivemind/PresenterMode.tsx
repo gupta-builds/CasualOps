@@ -279,7 +279,10 @@ export function PresenterMode({ open, onClose, result, derived, task }: Presente
 function PStat({ label, value, accent }: { label: string; value: string; accent: string }) {
   return (
     <div>
-      <div className={cn("font-mono font-thin tabular-nums leading-none", accent)} style={{ fontSize: "56px" }}>
+      <div
+        className={cn("font-mono font-thin tabular-nums leading-none", accent)}
+        style={{ fontSize: "56px" }}
+      >
         {value}
       </div>
       <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground/70">
@@ -296,7 +299,9 @@ function PMini({ label, v, kind }: { label: string; v: number; kind: "risk" | "c
   return (
     <div>
       <div className={cn("font-mono text-lg font-light tabular-nums", text)}>{v.toFixed(2)}</div>
-      <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/70">{label}</div>
+      <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/70">
+        {label}
+      </div>
     </div>
   );
 }

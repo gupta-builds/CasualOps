@@ -115,7 +115,7 @@ def compile_evidence_dataset(
     ]
     columns = list(dict.fromkeys([treatment, outcome, *confounders]))
 
-    records = _normalize_records(evidence_records)
+    records = list(_normalize_records(evidence_records))
     provenance: list[dict[str, Any]] = []
     skipped_synthetic = 0
 
@@ -137,7 +137,7 @@ def compile_evidence_dataset(
                 row["_source_type"] = record.source_type
                 row["_source_name"] = record.source_name
                 row["_raw_ref"] = record.raw_ref or f"evidence-{idx}"
-                
+
                 tmp.write(json.dumps(row) + "\n")
                 provenance.append(
                     {
@@ -157,12 +157,16 @@ def compile_evidence_dataset(
             existing_cols = lf.collect_schema().names()
             missing_cols = [c for c in columns if c not in existing_cols]
             
-            exprs = [pl.col(c).cast(pl.Float64, strict=False) for c in existing_cols if c in columns]
+            exprs = [
+                pl.col(c).cast(pl.Float64, strict=False)
+                for c in existing_cols
+                if c in columns
+            ]
             exprs.extend([pl.lit(None).cast(pl.Float64).alias(c) for c in missing_cols])
-            
+
             if exprs:
                 lf = lf.with_columns(exprs)
-                
+
             has_required = treatment in existing_cols and outcome in existing_cols
             if has_required:
                 lf_model = lf.drop_nulls(subset=[treatment, outcome])
@@ -170,9 +174,9 @@ def compile_evidence_dataset(
                 lf_model = pl.DataFrame(schema={c: pl.Float64 for c in columns}).lazy()
         else:
             lf_model = pl.DataFrame(schema={c: pl.Float64 for c in columns}).lazy()
-            
+
         model_df = lf_model.select(columns).collect().to_pandas()
-        
+
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
@@ -191,7 +195,11 @@ def compile_evidence_dataset(
         else 0
     )
     missingness = {
-        col: float(model_df[col].isna().mean()) if col in model_df and len(model_df) else 1.0
+        col: (
+            float(model_df[col].isna().mean())
+            if col in model_df and len(model_df)
+            else 1.0
+        )
         for col in columns
     }
     warnings = _profile_warnings(

@@ -25,31 +25,30 @@ const ClientGraph = lazy(async () => {
   return { default: m.CausalGraphClient };
 });
 
-export const CausalGraph = forwardRef<CausalGraphHandle, CausalGraphProps>(function CausalGraph(
-  props,
-  ref,
-) {
-  const innerRef = useRef<CausalGraphHandle | null>(null);
+export const CausalGraph = forwardRef<CausalGraphHandle, CausalGraphProps>(
+  function CausalGraph(props, ref) {
+    const innerRef = useRef<CausalGraphHandle | null>(null);
 
-  useImperativeHandle(ref, () => ({
-    getCanvas: () => innerRef.current?.getCanvas() ?? null,
-    fit: () => innerRef.current?.fit(),
-  }));
+    useImperativeHandle(ref, () => ({
+      getCanvas: () => innerRef.current?.getCanvas() ?? null,
+      fit: () => innerRef.current?.fit(),
+    }));
 
-  const fallback = (
-    <div
-      className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-[oklch(0.1_0.02_260/0.7)] text-xs uppercase tracking-widest text-muted-foreground"
-      style={{ height: props.height ?? 480 }}
-    >
-      Initializing graph engine…
-    </div>
-  );
+    const fallback = (
+      <div
+        className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-[oklch(0.1_0.02_260/0.7)] text-xs uppercase tracking-widest text-muted-foreground"
+        style={{ height: props.height ?? 480 }}
+      >
+        Initializing graph engine…
+      </div>
+    );
 
-  return (
-    <ClientOnly fallback={fallback}>
-      <Suspense fallback={fallback}>
-        <ClientGraph ref={innerRef} {...props} />
-      </Suspense>
-    </ClientOnly>
-  );
-});
+    return (
+      <ClientOnly fallback={fallback}>
+        <Suspense fallback={fallback}>
+          <ClientGraph ref={innerRef} {...props} />
+        </Suspense>
+      </ClientOnly>
+    );
+  },
+);
