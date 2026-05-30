@@ -9,6 +9,8 @@ from langgraph.constants import Send
 from langgraph.graph import END, START, StateGraph
 
 from agents import child_agent_node, grand_orchestrator_node, parent_agent_node
+from bus.helpers import bind_from_state
+from bus.publish import publish_telemetry
 from causal import causal_synthesis_node, dowhy_engine_node
 from evaluator import evaluate_memos_node
 from schema import GraphState
@@ -24,6 +26,8 @@ def route_to_parents(state: GraphState) -> list[Send]:
             "parent_agent",
             {
                 "task_description": state["task_description"],
+                "run_id": state["run_id"],
+                "correlation_id": state["correlation_id"],
                 "persona": config.persona,
                 "focus_objective": config.focus_objective,
             },
@@ -35,9 +39,15 @@ def route_to_parents(state: GraphState) -> list[Send]:
 def gather_children_node(state: GraphState) -> dict:
     """Barrier node that lets dynamically produced child configs converge."""
 
-    logger.info(
-        "Gathered %s child tasks",
-        len(state.get("child_configs", [])),
+    bind_from_state(state)
+    child_count = len(state.get("child_configs", []))
+    logger.info("Gathered %s child tasks", child_count)
+    publish_telemetry(
+        agent_id="control",
+        tier="control",
+        phase="CHILDREN_GATHER",
+        message=f"Gathered {child_count} child tasks",
+        status="done",
     )
     return {}
 
@@ -50,6 +60,8 @@ def route_to_children(state: GraphState) -> list[Send]:
             "child_agent",
             {
                 "task_description": state["task_description"],
+                "run_id": state["run_id"],
+                "correlation_id": state["correlation_id"],
                 "parent_persona": config.parent_persona,
                 "persona": config.persona,
                 "focus_objective": config.focus_objective,

@@ -26,7 +26,7 @@ export const CausalGraphSchema = z.object({
 });
 
 export const ImpactSchema = z.object({
-  ate: z.number().finite(),
+  ate: z.number().finite().nullable(),
   confidence: z.string().min(1),
   p_value: z.number().finite().nullable().optional(),
   ci_low: z.number().finite().nullable().optional(),

@@ -10,13 +10,19 @@ The API exposes two paths:
 """
 
 import asyncio
+import json
 import logging
 import os
+from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+
+from bus.consumer import stream_telemetry
+from bus.producer import set_event_loop, start_producer, stop_producer
 
 from dataset_compiler import compile_evidence_dataset
 from demo_fixtures import (
@@ -35,10 +41,23 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logging.getLogger("dowhy").setLevel(logging.WARNING)
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Start and stop shared Kafka producer with the API process."""
+
+    set_event_loop(asyncio.get_running_loop())
+    await start_producer()
+    try:
+        yield
+    finally:
+        await stop_producer()
+
+
 app = FastAPI(
     title="HiveMind API",
     version="0.2.0",
     description="Evidence-backed causal inference API for cyber decision support.",
+    lifespan=lifespan,
 )
 
 
@@ -69,6 +88,10 @@ class RunRequest(BaseModel):
     task_description: str = Field(
         min_length=20,
         description="Natural-language incident or decision scenario.",
+    )
+    run_id: str | None = Field(
+        default=None,
+        description="Optional client-supplied run id for SSE telemetry alignment.",
     )
     evidence_records: list[dict[str, Any]] | None = Field(
         default=None,
@@ -107,6 +130,7 @@ def read_root():
         "message": "Welcome to the HiveMind API",
         "docs_url": "/docs",
         "health_check": "/health",
+        "run_events_sse": "/run/{run_id}/events",
         "demo_estimate": "/demo/estimate",
         "normalizers": [
             "/normalize/sentinel",
@@ -123,6 +147,42 @@ def health_check():
     return {"status": "ok"}
 
 
+@app.get("/run/{run_id}/events")
+async def stream_run_events(run_id: str):
+    """Stream execution telemetry for a run as Server-Sent Events."""
+
+    async def event_generator():
+        stop_event = asyncio.Event()
+        try:
+            async for envelope in stream_telemetry(run_id, stop_event=stop_event):
+                payload = envelope.payload
+                phase = str(payload.get("phase", ""))
+                event = {
+                    "id": f"{run_id}-{envelope.agent_id}-{envelope.sequence}",
+                    "phase": phase,
+                    "message": str(payload.get("message", "")),
+                    "status": payload.get("status", "running"),
+                    "ts": int(envelope.timestamp.timestamp() * 1000),
+                }
+                yield f"data: {json.dumps(event)}\n\n"
+                if phase in ("COMPLETE", "ERROR"):
+                    stop_event.set()
+                    break
+        except asyncio.CancelledError:
+            stop_event.set()
+            raise
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
 @app.post("/run")
 async def run_engine(request: RunRequest):
     """Execute the full agent graph and optional evidence-backed estimator."""
@@ -132,6 +192,7 @@ async def run_engine(request: RunRequest):
         result = await run_hivemind(
             request.task_description,
             evidence_records=request.evidence_records,
+            run_id=request.run_id,
         )
         logger.info(
             "Successfully generated output for run_id: %s",

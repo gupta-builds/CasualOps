@@ -23,7 +23,7 @@ export interface CausalGraph {
 }
 
 export interface Impact {
-  ate: number;
+  ate: number | null;
   confidence: string;
   p_value?: number | null;
   ci_low?: number | null;
@@ -51,7 +51,7 @@ export interface HistoryEntry {
   timestamp: number;
   taskExcerpt: string;
   taskFull: string;
-  ate: number;
+  ate: number | null;
   confidence: string;
   strategyCount: number;
   payload: RunResponse;

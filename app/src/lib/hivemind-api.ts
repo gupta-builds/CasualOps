@@ -1,8 +1,10 @@
-import type { RunResponse } from "./hivemind-types";
+import type { ExecutionEvent, RunResponse } from "./hivemind-types";
 import { parseRunResponse, SchemaValidationError } from "./hivemind-schema";
 
 const DEFAULT_ENDPOINT = "http://localhost:8000/run";
 const STORAGE_KEY = "hivemind:apiUrl";
+/** Full LangGraph runs (orchestrator + parents + children + causal) often exceed 60s. */
+const RUN_REQUEST_TIMEOUT_MS = 600_000;
 
 function normalizeBase(url: string): string {
   const trimmed = url.trim().replace(/\/+$/, "");
@@ -22,6 +24,11 @@ export function getApiUrl(): string {
     /* ignore */
   }
   return DEFAULT_ENDPOINT;
+}
+
+/** API origin without the `/run` suffix (for SSE and health). */
+export function getApiBase(): string {
+  return getApiUrl().replace(/\/run\/?$/i, "");
 }
 
 export function setApiUrl(url: string): string {
@@ -48,10 +55,52 @@ export function clearApiUrl(): void {
 
 export const DEFAULT_API_URL = DEFAULT_ENDPOINT;
 
-export async function runCausalEngine(taskDescription: string): Promise<RunResponse> {
+export function newRunId(): string {
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15);
+  const suffix =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID().slice(0, 8)
+      : Math.random().toString(36).slice(2, 10);
+  return `run-${stamp}-${suffix}`;
+}
+
+export function streamRunEvents(
+  runId: string,
+  onEvent: (event: ExecutionEvent) => void,
+  signal?: AbortSignal,
+): () => void {
+  const url = `${getApiBase()}/run/${encodeURIComponent(runId)}/events`;
+  const source = new EventSource(url);
+
+  const onMessage = (message: MessageEvent<string>) => {
+    try {
+      const parsed = JSON.parse(message.data) as ExecutionEvent;
+      onEvent(parsed);
+    } catch {
+      /* ignore malformed SSE payloads */
+    }
+  };
+
+  source.addEventListener("message", onMessage as EventListener);
+
+  const abort = () => {
+    source.removeEventListener("message", onMessage as EventListener);
+    source.close();
+  };
+
+  signal?.addEventListener("abort", abort, { once: true });
+
+  return abort;
+}
+
+export async function runCausalEngine(
+  taskDescription: string,
+  options?: { runId?: string },
+): Promise<RunResponse> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60_000);
+  const timeout = setTimeout(() => controller.abort(), RUN_REQUEST_TIMEOUT_MS);
   const endpoint = getApiUrl();
+  const runId = options?.runId;
 
   try {
     const res = await fetch(endpoint, {
@@ -61,7 +110,10 @@ export async function runCausalEngine(taskDescription: string): Promise<RunRespo
         // Skip the localtunnel.me browser warning interstitial.
         "Bypass-Tunnel-Reminder": "true",
       },
-      body: JSON.stringify({ task_description: taskDescription }),
+      body: JSON.stringify({
+        task_description: taskDescription,
+        ...(runId ? { run_id: runId } : {}),
+      }),
       signal: controller.signal,
     });
 
@@ -79,7 +131,9 @@ export async function runCausalEngine(taskDescription: string): Promise<RunRespo
       throw err;
     }
     if (err instanceof DOMException && err.name === "AbortError") {
-      throw new Error("Request timed out after 60 seconds.");
+      throw new Error(
+        `Request timed out after ${Math.round(RUN_REQUEST_TIMEOUT_MS / 60_000)} minutes.`,
+      );
     }
     if (err instanceof TypeError) {
       throw new Error(

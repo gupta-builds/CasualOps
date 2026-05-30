@@ -80,7 +80,7 @@ export async function exportRunReport(
   y += 18;
   doc.setFontSize(28);
   doc.setTextColor(15, 23, 42);
-  doc.text(ate.toFixed(2), margin, y);
+  doc.text(ate == null ? "WITHHELD" : ate.toFixed(2), margin, y);
 
   // confidence pill
   const confColors: Record<string, [number, number, number]> = {

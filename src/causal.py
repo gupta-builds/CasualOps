@@ -17,6 +17,9 @@ from langchain_openai import AzureChatOpenAI
 
 from dataset_compiler import clean_variable, compile_evidence_dataset
 from estimators import estimate_causal_effect
+from bus.events import ArtifactType
+from bus.helpers import bind_from_state
+from bus.publish import publish_artifact, publish_telemetry
 from schema import CausalPayload, GraphState
 
 logger = logging.getLogger(__name__)
@@ -52,6 +55,15 @@ synth_chain = synth_prompt | llm.with_structured_output(CausalPayload)
 def causal_synthesis_node(state: GraphState):
     """Generate a measurable causal hypothesis and evidence plan."""
 
+    bind_from_state(state)
+    publish_telemetry(
+        agent_id="causal_architect",
+        tier="causal",
+        phase="CAUSAL_SYNTH",
+        message="Building causal hypothesis and measurement plan",
+        status="running",
+    )
+
     logger.info("Causal architect generating measurable hypothesis")
     memos = state.get("memos", [])
     ranked = state.get("ranked_strategies", [])
@@ -65,6 +77,20 @@ def causal_synthesis_node(state: GraphState):
     payload_dict = payload.model_dump()
     payload_dict["graph"] = _sanitize_graph(payload_dict.get("graph", {}))
 
+    publish_artifact(
+        agent_id="causal_architect",
+        tier="causal",
+        artifact_type=ArtifactType.CAUSAL_PAYLOAD,
+        payload=payload_dict,
+    )
+    publish_telemetry(
+        agent_id="causal_architect",
+        tier="causal",
+        phase="CAUSAL_SYNTH",
+        message="Causal payload ready",
+        status="done",
+    )
+
     return {
         "causal_payload": payload_dict,
         "causal_refutation_passed": False,
@@ -73,6 +99,15 @@ def causal_synthesis_node(state: GraphState):
 
 def dowhy_engine_node(state: GraphState):
     """Compile evidence records and estimate causal effects when gates pass."""
+
+    bind_from_state(state)
+    publish_telemetry(
+        agent_id="estimator",
+        tier="estimator",
+        phase="ESTIMATE",
+        message="Compiling evidence and estimating causal effect",
+        status="running",
+    )
 
     logger.info("Causal estimator compiling evidence and estimating effects")
     payload = state.get("causal_payload") or {}
@@ -105,6 +140,20 @@ def dowhy_engine_node(state: GraphState):
         "method": report.method,
         "warnings": report.warnings,
     }
+
+    publish_artifact(
+        agent_id="estimator",
+        tier="estimator",
+        artifact_type=ArtifactType.CAUSAL_ESTIMATE_REPORT,
+        payload=report_dict,
+    )
+    publish_telemetry(
+        agent_id="estimator",
+        tier="estimator",
+        phase="ESTIMATE",
+        message=f"Estimation complete ({report.method})",
+        status="done",
+    )
 
     return {
         "dowhy_results": legacy_results,

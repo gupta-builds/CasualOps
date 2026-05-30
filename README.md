@@ -143,6 +143,21 @@ AZURE_OPENAI_DEPLOYMENT=gpt-4o
 AZURE_OPENAI_API_VERSION=2024-08-01-preview
 ```
 
+With Docker Compose, Kafka is enabled automatically via Redpanda:
+
+```env
+# Set only when running the API outside Compose (Compose uses redpanda:9092)
+KAFKA_BOOTSTRAP=localhost:19092
+```
+
+Topics: `hivemind.runs`, `hivemind.spawn`, `hivemind.artifacts`, `hivemind.telemetry`.
+
+Live UI progress uses SSE. The frontend generates a `run_id`, opens
+`GET /run/{run_id}/events`, then calls `POST /run` with the same id. If
+`KAFKA_BOOTSTRAP` is unset, the graph still runs but the event stream is empty.
+
+See [ARCH.md](ARCH.md) for bus design decisions.
+
 Start the full stack:
 
 ```bash
