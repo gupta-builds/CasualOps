@@ -45,6 +45,16 @@ Record of major design choices for the Kafka event bus (Phase 0–1). Short just
 | Branch policy | `feature/kafka-bus` → single merge to `main` | Owner policy: no partial merges until end-to-end works |
 | `data/*.json` | Still written at run end | User-facing bundle; Kafka is event log not query API |
 
+## Phase 1b (bus summaries)
+
+| Decision | Choice | Justification |
+|----------|--------|---------------|
+| GraphState slimming | Deferred | Evaluator/causal still need full memos in-process until Phase 2 workers |
+| `bus_summary` | Counters on publish context | Bridges Kafka event log and `data/*.json` tier metrics without consuming topics |
+| Benchmarking | Counts from summary + sample memo | Orchestrator/parent/child/evaluator tiers use bus counts; causal/estimator unchanged |
+
+`bus_summary` fields: `parent_config_count`, `child_config_count`, `memo_count`, `has_ranked_strategies`, `has_causal_payload`, `has_estimate_report`.
+
 ## Deferred (Phase 2+)
 
 - Distributed workers consuming `hivemind.spawn`

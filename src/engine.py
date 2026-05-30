@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from benchmarking import score_agent_tiers
-from bus.context import bind_run_context, clear_run_context
+from bus.context import bind_run_context, clear_run_context, get_run_summary
 from bus.helpers import bind_from_state
 from bus.producer import set_event_loop
 from bus.publish import publish_run_event, publish_telemetry
@@ -81,8 +81,10 @@ async def run_hivemind(
         status="running",
     )
 
+    bus_summary: dict[str, Any] = {}
     try:
         final_state = await graph.ainvoke(initial_state)
+        bus_summary = get_run_summary()
     except Exception as exc:
         bind_from_state(initial_state)
         publish_run_event("failed", detail=str(exc))
@@ -121,7 +123,7 @@ async def run_hivemind(
     dowhy_results = final_state.get("dowhy_results") or {}
     causal_estimate_report = final_state.get("causal_estimate_report") or {}
     causal_dataset_profile = final_state.get("causal_dataset_profile") or {}
-    agent_tier_metrics = score_agent_tiers(final_state)
+    agent_tier_metrics = score_agent_tiers(final_state, summary=bus_summary)
     ate_estimate = _impact_ate(causal_estimate_report, dowhy_results)
     confidence = _impact_confidence(causal_estimate_report)
 
@@ -144,6 +146,7 @@ async def run_hivemind(
         "causal_estimate_report": causal_estimate_report,
         "causal_dataset_profile": causal_dataset_profile,
         "agent_tier_metrics": agent_tier_metrics,
+        "bus_summary": bus_summary,
     }
 
     artifact_path = DATA_DIR / f"{run_id}.json"
