@@ -158,6 +158,18 @@ Live UI progress uses SSE. The frontend generates a `run_id`, opens
 
 See [ARCH.md](ARCH.md) for bus design decisions.
 
+### Manual acceptance (before merge to main)
+
+With the stack running (`docker compose up`), verify the bus:
+
+```bash
+chmod +x scripts/smoke_kafka_bus.sh
+./scripts/smoke_kafka_bus.sh
+```
+
+Runs serde/summary tests, checks `/health`, and lists Redpanda topics when compose is up.
+POST `/run` requires Azure keys and is exercised via the UI. Client POST timeout is 10 minutes.
+
 Start the full stack:
 
 ```bash
