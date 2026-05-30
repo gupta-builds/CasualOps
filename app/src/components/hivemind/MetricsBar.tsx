@@ -82,7 +82,9 @@ export function MetricsBar({ impact, runId, derived }: MetricsBarProps) {
     typeof impact.p_value === "number" ? `p=${impact.p_value.toPrecision(2)}` : "p unavailable";
   const methodLabel = withheld
     ? impact.method?.replace(/^withheld:/, "withheld · ") ?? "estimate withheld"
-    : impact.method || "estimator unavailable";
+    : impact.demo_fixture
+      ? "demo SIEM fixture · patch vs lateral movement"
+      : impact.method || "estimator unavailable";
   const rowCount = typeof impact.n_rows === "number" ? impact.n_rows : derived.trajectories;
 
   // Position of ATE on a -1..+1 scale (clamped). Used to render the marker.

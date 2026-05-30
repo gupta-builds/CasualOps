@@ -41,6 +41,7 @@ class RunRecord:
     task_description: str
     phase: str = "created"
     status: str = "running"
+    error_detail: str | None = None
     evidence_records: list[dict[str, Any]] = field(default_factory=list)
     parent_configs: list[AgentConfig] = field(default_factory=list)
     child_configs: list[ChildConfig] = field(default_factory=list)
@@ -163,6 +164,7 @@ class RunStore:
         correlation_id: str,
         task_description: str,
         evidence_records: list[dict[str, Any]] | None = None,
+        status: str = "running",
     ) -> RunRecord:
         """Insert a new run record."""
 
@@ -172,10 +174,45 @@ class RunStore:
             task_description=task_description,
             evidence_records=evidence_records or [],
             phase="created",
-            status="running",
+            status=status,
         )
         self.save(record)
         return record
+
+    def enqueue_run(
+        self,
+        *,
+        run_id: str,
+        correlation_id: str,
+        task_description: str,
+        evidence_records: list[dict[str, Any]] | None = None,
+    ) -> RunRecord:
+        """Create a queued run awaiting background execution."""
+
+        record = RunRecord(
+            run_id=run_id,
+            correlation_id=correlation_id,
+            task_description=task_description,
+            evidence_records=evidence_records or [],
+            phase="queued",
+            status="queued",
+        )
+        self.save(record)
+        return record
+
+    def set_status(
+        self,
+        record: RunRecord,
+        status: str,
+        *,
+        error_detail: str | None = None,
+    ) -> None:
+        """Update run lifecycle status."""
+
+        record.status = status
+        if error_detail is not None:
+            record.error_detail = error_detail
+        self.save(record)
 
     def get_run(self, run_id: str) -> RunRecord:
         """Load a run record by id."""
@@ -272,6 +309,7 @@ def _record_to_json(record: RunRecord) -> dict[str, Any]:
         "task_description": record.task_description,
         "phase": record.phase,
         "status": record.status,
+        "error_detail": record.error_detail,
         "evidence_records": record.evidence_records,
         "parent_configs": [c.model_dump() for c in record.parent_configs],
         "child_configs": [c.model_dump() for c in record.child_configs],
@@ -300,6 +338,7 @@ def _record_from_json(data: dict[str, Any]) -> RunRecord:
         task_description=data["task_description"],
         phase=data.get("phase", "created"),
         status=data.get("status", "running"),
+        error_detail=data.get("error_detail"),
         evidence_records=data.get("evidence_records") or [],
         parent_configs=[AgentConfig.model_validate(c) for c in data.get("parent_configs", [])],
         child_configs=[ChildConfig.model_validate(c) for c in data.get("child_configs", [])],

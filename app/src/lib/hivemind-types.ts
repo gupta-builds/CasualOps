@@ -30,6 +30,7 @@ export interface Impact {
   ci_high?: number | null;
   n_rows?: number;
   method?: string;
+  demo_fixture?: boolean;
 }
 
 export interface RunResponse {
@@ -44,6 +45,22 @@ export interface RunResponse {
   causal_dataset_profile?: unknown;
   agent_tier_metrics?: unknown;
 }
+
+export interface RunEnqueueResponse {
+  run_id: string;
+  status: "queued" | "running" | "completed" | "failed";
+}
+
+export interface RunStatusResponse {
+  run_id: string;
+  status: "queued" | "running" | "completed" | "failed";
+  error?: string;
+  artifact?: RunResponse;
+}
+
+export type EnqueueResult =
+  | { mode: "async"; run_id: string; status: "queued" }
+  | { mode: "sync"; run_id: string; artifact: RunResponse };
 
 export interface HistoryEntry {
   id: string;

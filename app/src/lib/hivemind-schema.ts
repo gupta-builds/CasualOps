@@ -33,6 +33,7 @@ export const ImpactSchema = z.object({
   ci_high: z.number().finite().nullable().optional(),
   n_rows: z.number().int().nonnegative().optional(),
   method: z.string().optional(),
+  demo_fixture: z.boolean().optional(),
 });
 
 export const RunResponseSchema = z.object({
@@ -67,7 +68,8 @@ export class SchemaValidationError extends Error {
 }
 
 export function parseRunResponse(raw: unknown): RunResponse {
-  const result = RunResponseSchema.safeParse(raw);
+  const artifact = extractRunArtifact(raw);
+  const result = RunResponseSchema.safeParse(artifact);
   if (!result.success) {
     const issues: SchemaIssue[] = result.error.issues.map((i) => ({
       path: i.path.length ? i.path.map(String).join(".") : "(root)",
@@ -77,4 +79,35 @@ export function parseRunResponse(raw: unknown): RunResponse {
     throw new SchemaValidationError(issues, raw);
   }
   return result.data;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+/** Normalize async GET envelopes and reject enqueue-only payloads before Zod. */
+export function extractRunArtifact(raw: unknown): unknown {
+  if (!isRecord(raw)) {
+    throw new SchemaValidationError(
+      [{ path: "(root)", message: "Expected object", code: "invalid_type" }],
+      raw,
+    );
+  }
+
+  if ("strategies" in raw && "causal_graph" in raw && "impact" in raw) {
+    return raw;
+  }
+
+  if ("artifact" in raw && isRecord(raw.artifact)) {
+    return raw.artifact;
+  }
+
+  if (raw.status === "queued" || raw.status === "running") {
+    throw new Error(
+      "Received run status instead of a completed artifact. " +
+        "Wait for the execution stream to finish, then fetch GET /run/{run_id}.",
+    );
+  }
+
+  return raw;
 }

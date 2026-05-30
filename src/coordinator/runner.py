@@ -27,12 +27,21 @@ async def execute_run(
     """Run the full HiveMind workflow via coordinator + run store."""
 
     run_store = store or get_run_store()
-    record = run_store.create_run(
-        run_id=run_id,
-        correlation_id=correlation_id,
-        task_description=task_description,
-        evidence_records=evidence_records,
-    )
+    try:
+        record = run_store.get_run(run_id)
+        record.status = "running"
+        record.phase = "running"
+        if evidence_records is not None:
+            record.evidence_records = evidence_records
+        run_store.save(record)
+    except KeyError:
+        record = run_store.create_run(
+            run_id=run_id,
+            correlation_id=correlation_id,
+            task_description=task_description,
+            evidence_records=evidence_records,
+            status="running",
+        )
 
     try:
         await _run_orchestrator(record, run_store)

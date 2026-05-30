@@ -22,6 +22,8 @@ from bus.helpers import bind_from_state
 from bus.producer import set_event_loop
 from bus.publish import publish_run_event, publish_telemetry
 from coordinator.runner import execute_run
+from coordinator.store import get_run_store
+from demo_fixtures import is_demo_evidence, resolve_run_evidence
 
 DATA_DIR = Path("../data")
 
@@ -50,6 +52,7 @@ async def run_hivemind(
 
     resolved_run_id = run_id or new_run_id()
     correlation_id = resolved_run_id
+    resolved_evidence, used_demo_fixture = resolve_run_evidence(evidence_records)
     bind_run_context(resolved_run_id, correlation_id)
     set_event_loop(asyncio.get_running_loop())
 
@@ -57,7 +60,7 @@ async def run_hivemind(
         "task_description": task_description,
         "run_id": resolved_run_id,
         "correlation_id": correlation_id,
-        "evidence_records": evidence_records or [],
+        "evidence_records": resolved_evidence,
     }
 
     publish_run_event("started")
@@ -73,7 +76,7 @@ async def run_hivemind(
     try:
         final_state = await execute_run(
             task_description=task_description,
-            evidence_records=evidence_records,
+            evidence_records=resolved_evidence,
             run_id=resolved_run_id,
             correlation_id=correlation_id,
         )
@@ -88,25 +91,17 @@ async def run_hivemind(
             message=str(exc),
             status="error",
         )
+        try:
+            record = get_run_store().get_run(resolved_run_id)
+            get_run_store().set_status(record, "failed", error_detail=str(exc))
+        except KeyError:
+            pass
         raise
     finally:
         clear_run_context()
 
     run_id = final_state.get("run_id", resolved_run_id)
     DATA_DIR.mkdir(exist_ok=True)
-
-    bind_run_context(run_id, correlation_id)
-    try:
-        publish_telemetry(
-            agent_id="control",
-            tier="control",
-            phase="COMPLETE",
-            message="Causal loop complete",
-            status="done",
-        )
-        publish_run_event("completed")
-    finally:
-        clear_run_context()
 
     memos_raw = [serialize_pydantic(memo) for memo in final_state.get("memos", [])]
     strategies = [_strategy_card(i, memo) for i, memo in enumerate(memos_raw)]
@@ -135,6 +130,8 @@ async def run_hivemind(
             "ci_high": causal_estimate_report.get("ci_high"),
             "n_rows": causal_estimate_report.get("n_rows", 0),
             "method": causal_estimate_report.get("method", "unknown"),
+            "demo_fixture": used_demo_fixture
+            or is_demo_evidence(resolved_evidence),
         },
         "causal_estimate_report": causal_estimate_report,
         "causal_dataset_profile": causal_dataset_profile,
@@ -146,7 +143,36 @@ async def run_hivemind(
     with artifact_path.open("w", encoding="utf-8") as handle:
         json.dump(artifact, handle, indent=2)
 
+    try:
+        record = get_run_store().get_run(run_id)
+        get_run_store().set_status(record, "completed")
+    except KeyError:
+        pass
+
+    bind_run_context(run_id, correlation_id)
+    try:
+        publish_telemetry(
+            agent_id="control",
+            tier="control",
+            phase="COMPLETE",
+            message="Causal loop complete",
+            status="done",
+        )
+        publish_run_event("completed")
+    finally:
+        clear_run_context()
+
     return artifact
+
+
+def load_run_artifact(run_id: str) -> dict[str, Any] | None:
+    """Load a persisted run artifact from disk."""
+
+    artifact_path = DATA_DIR / f"{run_id}.json"
+    if not artifact_path.is_file():
+        return None
+    with artifact_path.open(encoding="utf-8") as handle:
+        return json.load(handle)
 
 
 def _strategy_card(index: int, memo: dict[str, Any]) -> dict[str, Any]:

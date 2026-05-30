@@ -16,6 +16,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import AzureChatOpenAI
 
 from dataset_compiler import clean_variable, compile_evidence_dataset
+from demo_fixtures import demo_causal_payload, is_demo_evidence
 from estimators import estimate_causal_effect
 from bus.events import ArtifactType
 from bus.helpers import bind_from_state
@@ -67,15 +68,24 @@ def causal_synthesis_node(state: GraphState):
     logger.info("Causal architect generating measurable hypothesis")
     memos = state.get("memos", [])
     ranked = state.get("ranked_strategies", [])
-    memos_text = "\n\n".join([_format_memo(memo) for memo in memos])
-    evaluator_text = str(ranked[-1] if ranked else {})
+    evidence_records = state.get("evidence_records", []) or []
 
-    payload = synth_chain.invoke({
-        "memos_text": memos_text,
-        "evaluator_text": evaluator_text,
-    })
-    payload_dict = payload.model_dump()
-    payload_dict["graph"] = _sanitize_graph(payload_dict.get("graph", {}))
+    if is_demo_evidence(evidence_records):
+        payload_dict = demo_causal_payload()
+        payload_dict["graph"] = _sanitize_graph(payload_dict.get("graph", {}))
+        logger.info(
+            "Using bundled demo causal fixture because no caller evidence was supplied"
+        )
+    else:
+        memos_text = "\n\n".join([_format_memo(memo) for memo in memos])
+        evaluator_text = str(ranked[-1] if ranked else {})
+
+        payload = synth_chain.invoke({
+            "memos_text": memos_text,
+            "evaluator_text": evaluator_text,
+        })
+        payload_dict = payload.model_dump()
+        payload_dict["graph"] = _sanitize_graph(payload_dict.get("graph", {}))
 
     publish_artifact(
         agent_id="causal_architect",
@@ -117,6 +127,13 @@ def dowhy_engine_node(state: GraphState):
     compilation = compile_evidence_dataset(graph_def, evidence_records)
     report = estimate_causal_effect(graph_def, compilation.dataframe, compilation.profile)
     report_dict = report.model_dump()
+    if is_demo_evidence(evidence_records):
+        report_dict.setdefault("warnings", []).insert(
+            0,
+            "DEMO_FIXTURE: No caller evidence was supplied. ATE is estimated from "
+            "the bundled patch-vs-lateral-movement SIEM fixture, not from your "
+            "scenario telemetry. Upload normalized evidence for a scenario-specific estimate.",
+        )
     attempts = int(state.get("causal_refutation_attempts", 0)) + 1
 
     if report.ate is None:

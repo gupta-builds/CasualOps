@@ -18,7 +18,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from bus.consumer import stream_telemetry
@@ -30,7 +30,8 @@ from demo_fixtures import (
     patch_lateral_movement_evidence,
     patch_lateral_movement_graph,
 )
-from engine import run_hivemind
+from coordinator.store import get_run_store
+from engine import load_run_artifact, new_run_id, run_hivemind
 from estimators import estimate_causal_effect
 from evidence_adapters import (
     normalize_cve_records,
@@ -135,6 +136,7 @@ def read_root():
         "message": "Welcome to the HiveMind API",
         "docs_url": "/docs",
         "health_check": "/health",
+        "run_status": "/run/{run_id}",
         "run_events_sse": "/run/{run_id}/events",
         "demo_estimate": "/demo/estimate",
         "normalizers": [
@@ -188,11 +190,96 @@ async def stream_run_events(run_id: str):
     )
 
 
-@app.post("/run")
-async def run_engine(request: RunRequest):
-    """Execute the full agent graph and optional evidence-backed estimator."""
+async def _execute_run_background(
+    *,
+    run_id: str,
+    task_description: str,
+    evidence_records: list[dict[str, Any]] | None,
+) -> None:
+    """Run HiveMind in the background for async POST /run."""
 
-    logger.info("Received request to run HiveMind engine")
+    try:
+        await run_hivemind(
+            task_description,
+            evidence_records=evidence_records,
+            run_id=run_id,
+        )
+    except Exception:
+        logger.exception("Background run failed for run_id=%s", run_id)
+
+
+@app.get("/run/{run_id}")
+async def get_run_status(run_id: str):
+    """Return run lifecycle status and artifact when complete."""
+
+    store = get_run_store()
+    try:
+        record = store.get_run(run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Run not found") from exc
+
+    artifact = None
+    if record.status == "completed":
+        artifact = load_run_artifact(run_id)
+
+    # Coordinator may mark the run completed before the artifact file is written.
+    effective_status = record.status
+    if record.status == "completed" and artifact is None:
+        effective_status = "running"
+
+    payload: dict[str, Any] = {
+        "run_id": run_id,
+        "status": effective_status,
+    }
+    if record.error_detail:
+        payload["error"] = record.error_detail
+    if artifact is not None:
+        payload["artifact"] = artifact
+    return payload
+
+
+@app.post("/run", status_code=202)
+async def enqueue_run(request: RunRequest):
+    """Enqueue the full agent graph and return immediately."""
+
+    run_id = request.run_id or new_run_id()
+    store = get_run_store()
+    try:
+        existing = store.get_run(run_id)
+    except KeyError:
+        existing = None
+
+    if existing is not None and existing.status in ("queued", "running"):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Run {run_id} is already {existing.status}",
+        )
+
+    store.enqueue_run(
+        run_id=run_id,
+        correlation_id=run_id,
+        task_description=request.task_description,
+        evidence_records=request.evidence_records,
+    )
+    asyncio.create_task(
+        _execute_run_background(
+            run_id=run_id,
+            task_description=request.task_description,
+            evidence_records=request.evidence_records,
+        )
+    )
+    logger.info("Enqueued HiveMind run_id=%s", run_id)
+    return JSONResponse(
+        status_code=202,
+        content={"run_id": run_id, "status": "queued"},
+    )
+
+
+@app.post("/run/sync")
+async def run_engine_sync(request: RunRequest):
+    """Blocking run endpoint retained for scripts and integration tests."""
+
+    logger.info("Received synchronous request to run HiveMind engine")
     try:
         result = await run_hivemind(
             request.task_description,

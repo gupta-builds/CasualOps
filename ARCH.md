@@ -41,8 +41,8 @@ Phase 1b added `bus_summary` counters at publish time to bridge Kafka event coun
 
 | Decision | Choice | Phase |
 |----------|--------|-------|
-| `/run` semantics | Blocking 200 JSON | Phase 1; retained during Phase 2a–2b build-out |
-| `/run` semantics | **202 Accepted** + `GET /run/{run_id}` for artifact | Phase 2c (required before merge) |
+| `/run` semantics | **202 Accepted** + `GET /run/{run_id}` for artifact | Phase 2c (default) |
+| `/run/sync` | Blocking 200 JSON | Scripts and integration tests |
 | `run_id` | Client-supplied (optional) | Enables SSE subscription before POST |
 | SSE route | `GET /run/{run_id}/events` | Maps telemetry envelopes to `ExecutionEvent` |
 | SSE offset | `auto_offset_reset=latest` | Client connects before POST; in-flight run events only |
@@ -91,7 +91,7 @@ Phase 1b added `bus_summary` counters at publish time to bridge Kafka event coun
 |-----------|----------|---------------|------------|--------|
 | **2a** Coordinator + run store; replace `graph.ainvoke` | State machine + SQLite; blocking `/run` | Partial (scheduler only) | No | Done |
 | **2b** Spawn-driven fan-out | In-process consumers on `hivemind.spawn`; remove LangGraph `Send` | Yes (fan-out) | No | Done — `src/worker/` |
-| **2c** Async API + frontend | `POST /run` → 202; `GET /run/{run_id}`; SSE terminal + fetch | Yes (full user contract) | Yes | Planned |
+| **2c** Async API + frontend | `POST /run` → 202; `GET /run/{run_id}`; SSE terminal + fetch | Yes (full user contract) | Yes | Done |
 | **2d** Pre-PR hardening | Idempotency, DLQ, optional separate `worker` container, docs, smoke | Production-ready | Minimal | Planned |
 
 **Phase 2 done** = 2c + 2d acceptance. Only then consider PR to `main`.
