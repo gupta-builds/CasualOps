@@ -81,7 +81,7 @@ export function MetricsBar({ impact, runId, derived }: MetricsBarProps) {
   const reportedPValue =
     typeof impact.p_value === "number" ? `p=${impact.p_value.toPrecision(2)}` : "p unavailable";
   const methodLabel = withheld
-    ? impact.method?.replace(/^withheld:/, "withheld · ") ?? "estimate withheld"
+    ? (impact.method?.replace(/^withheld:/, "withheld · ") ?? "estimate withheld")
     : impact.demo_fixture
       ? "demo SIEM fixture · patch vs lateral movement"
       : impact.method || "estimator unavailable";
@@ -261,7 +261,11 @@ export function MetricsBar({ impact, runId, derived }: MetricsBarProps) {
         </div>
 
         <div className="mt-5 grid grid-cols-3 gap-3">
-          <Stat label="nodes" value={String(derived.graph.nodes).padStart(2, "0")} accent="text-foreground" />
+          <Stat
+            label="nodes"
+            value={String(derived.graph.nodes).padStart(2, "0")}
+            accent="text-foreground"
+          />
           <Stat
             label="edges"
             value={String(derived.graph.edges).padStart(2, "0")}
@@ -288,9 +292,7 @@ export function MetricsBar({ impact, runId, derived }: MetricsBarProps) {
                 key={i}
                 className={cn(
                   "h-1 rounded",
-                  i < derived.graph.maxDepth
-                    ? "bg-[color:var(--neon-violet)]"
-                    : "bg-white/5",
+                  i < derived.graph.maxDepth ? "bg-[color:var(--neon-violet)]" : "bg-white/5",
                 )}
               />
             ))}
@@ -318,8 +320,7 @@ export function MetricsBar({ impact, runId, derived }: MetricsBarProps) {
             </span>
           </span>
           <span className="flex items-center gap-1.5">
-            rows{" "}
-            <span className="text-foreground/80 tabular-nums">{rowCount}</span>
+            rows <span className="text-foreground/80 tabular-nums">{rowCount}</span>
           </span>
         </div>
       </article>

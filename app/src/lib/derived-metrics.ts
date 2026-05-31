@@ -149,9 +149,7 @@ export function computeDerivedMetrics(run: RunResponse): DerivedMetrics {
 
   const confidenceScore = confidenceToScore(impact.confidence);
   const hasReportedCi =
-    !withheld &&
-    typeof impact.ci_low === "number" &&
-    typeof impact.ci_high === "number";
+    !withheld && typeof impact.ci_low === "number" && typeof impact.ci_high === "number";
   const noise = ((hash32(run.run_id || "x") % 1000) / 1000 - 0.5) * 0.04;
   const halfWidth = (1 - confidenceScore) * 0.28 + 0.06 + noise;
   const ate = impact.ate ?? 0;

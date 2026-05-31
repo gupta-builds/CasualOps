@@ -12,8 +12,7 @@ interface PromptScaffoldProps {
 export function PromptScaffold({ onCompose, onClose }: PromptScaffoldProps) {
   const [fields, setFields] = useState<FrameworkFields>(EMPTY_FRAMEWORK);
 
-  const update = (k: keyof FrameworkFields, v: string) =>
-    setFields((f) => ({ ...f, [k]: v }));
+  const update = (k: keyof FrameworkFields, v: string) => setFields((f) => ({ ...f, [k]: v }));
 
   const handleInsert = () => {
     const composed = composeFramework(fields);

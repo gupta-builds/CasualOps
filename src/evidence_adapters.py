@@ -145,9 +145,12 @@ def _extract_cve_id(record: dict[str, Any]) -> str | None:
     """Extract a CVE identifier from flat or NVD nested records."""
 
     flat = _first(record, CVE_ID_KEYS)
-    if flat:
+    if flat and not isinstance(flat, (dict, list)):
         return str(flat)
+
     nested = record.get("cve")
+    if not isinstance(nested, dict) and isinstance(flat, dict):
+        nested = flat
     if isinstance(nested, dict):
         nested_id = _first(nested, CVE_ID_KEYS)
         return str(nested_id) if nested_id else None

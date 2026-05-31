@@ -32,11 +32,7 @@ export type DomainKey =
   | "insider"
   | "data";
 
-export type EvidenceType =
-  | "telemetry"
-  | "heuristic"
-  | "model_inferred"
-  | "external_intel";
+export type EvidenceType = "telemetry" | "heuristic" | "model_inferred" | "external_intel";
 
 export interface AgentNode {
   id: string;
@@ -81,14 +77,7 @@ export interface EdgeAnnotation {
 export interface DecisionLogEntry {
   tMs: number;
   agentId: string;
-  kind:
-    | "spawn"
-    | "reject"
-    | "prune"
-    | "hypothesis"
-    | "evidence"
-    | "merge"
-    | "validate";
+  kind: "spawn" | "reject" | "prune" | "hypothesis" | "evidence" | "merge" | "validate";
   message: string;
 }
 
@@ -162,11 +151,7 @@ function rng(seed: number) {
   };
 }
 
-function pickEvidence(
-  rand: () => number,
-  domain: DomainKey,
-  hasTelemetry: boolean,
-): EvidenceType {
+function pickEvidence(rand: () => number, domain: DomainKey, hasTelemetry: boolean): EvidenceType {
   const r = rand();
   if (hasTelemetry && r < 0.45) return "telemetry";
   if (r < 0.7) return "model_inferred";
@@ -197,9 +182,7 @@ export function buildObservabilityTrace(
   ttps: string[],
   result: RunResponse,
 ): ObservabilityTrace {
-  const seed = hash(
-    `${result.run_id}|${scenario.asset}|${scenario.actor}|${ttps.join(",")}`,
-  );
+  const seed = hash(`${result.run_id}|${scenario.asset}|${scenario.actor}|${ttps.join(",")}`);
   const rand = rng(seed);
 
   const graph = result.causal_graph ?? { nodes: [], edges: [] };
@@ -249,8 +232,7 @@ export function buildObservabilityTrace(
     label: "Grand Orchestrator",
     parentId: null,
     status: "active",
-    activationReason:
-      "Top-level decomposition of analyst hypothesis into domain partitions.",
+    activationReason: "Top-level decomposition of analyst hypothesis into domain partitions.",
     triggeringHypothesis: composeRootHypothesis(scenario),
     triggeringSignals: [
       `asset:${scenario.asset || "?"}`.slice(0, 64),
@@ -383,8 +365,7 @@ export function buildObservabilityTrace(
   let validatedCount = 0;
   for (const e of graph.edges) {
     const key = `${e.source}->${e.target}`;
-    const ownerAgent =
-      nodeToAgent.get(e.target) ?? nodeToAgent.get(e.source) ?? orchestratorId;
+    const ownerAgent = nodeToAgent.get(e.target) ?? nodeToAgent.get(e.source) ?? orchestratorId;
     const ownerNode = agents.find((a) => a.id === ownerAgent);
     const domain = ownerNode?.domain ?? "network";
     const hasTel = /tel|edr|log|alert|siem/i.test(scenario.environment);
@@ -485,15 +466,7 @@ export function buildObservabilityTrace(
 // ---------------------------------------------------------------------------
 
 function scoreDomains(s: ScenarioState, ttps: string[]): Record<DomainKey, number> {
-  const text = [
-    s.asset,
-    s.actor,
-    s.objective,
-    s.vector,
-    s.environment,
-    s.impact,
-    s.detection_gaps,
-  ]
+  const text = [s.asset, s.actor, s.objective, s.vector, s.environment, s.impact, s.detection_gaps]
     .join(" \n ")
     .toLowerCase();
 
@@ -512,16 +485,16 @@ function scoreDomains(s: ScenarioState, ttps: string[]): Record<DomainKey, numbe
   // Keyword evidence
   if (/sso|aitm|mfa|oauth|entra|okta|saml|token|session|kerb|ad |active dir/.test(text))
     bump("identity", 3);
-  if (/phish|email|smtp|cdn|edge|firewall|vpn|tunnel|c2|beacon|dns/.test(text))
-    bump("network", 2);
+  if (/phish|email|smtp|cdn|edge|firewall|vpn|tunnel|c2|beacon|dns/.test(text)) bump("network", 2);
   if (/edr|defender|crowd|sentinel|lsass|powershell|wmi|scheduled task|registry/.test(text))
     bump("endpoint", 3);
   if (/aws|azure|gcp|s3|iam|kms|tenant|m365|exchange|sharepoint|graph api/.test(text))
     bump("cloud", 3);
-  if (/supply chain|vendor|3rd party|third[- ]party|dependency|build|ci\/cd|sbom|3cx|solar/.test(text))
+  if (
+    /supply chain|vendor|3rd party|third[- ]party|dependency|build|ci\/cd|sbom|3cx|solar/.test(text)
+  )
     bump("supply_chain", 4);
-  if (/insider|contractor|disgrunt|departing|admin abuse|leaver/.test(text))
-    bump("insider", 4);
+  if (/insider|contractor|disgrunt|departing|admin abuse|leaver/.test(text)) bump("insider", 4);
   if (/exfil|leak|dump|backup|database|pii|phi|crown jew|encrypt|ransom|s3 bucket/.test(text))
     bump("data", 3);
 
@@ -589,14 +562,20 @@ function domainHypothesis(d: DomainKey, s: ScenarioState): string {
 function domainTriggers(d: DomainKey, s: ScenarioState, ttps: string[]): string[] {
   const sigs: string[] = [];
   const text = `${s.actor} ${s.vector} ${s.environment} ${s.objective}`.toLowerCase();
-  if (d === "identity" && /sso|aitm|mfa|entra|okta|token/.test(text)) sigs.push("identity provider in scope");
-  if (d === "endpoint" && /edr|defender|lsass|powershell/.test(text)) sigs.push("endpoint execution context");
-  if (d === "cloud" && /aws|azure|gcp|m365|graph/.test(text)) sigs.push("cloud control plane present");
+  if (d === "identity" && /sso|aitm|mfa|entra|okta|token/.test(text))
+    sigs.push("identity provider in scope");
+  if (d === "endpoint" && /edr|defender|lsass|powershell/.test(text))
+    sigs.push("endpoint execution context");
+  if (d === "cloud" && /aws|azure|gcp|m365|graph/.test(text))
+    sigs.push("cloud control plane present");
   if (d === "supply_chain" && /vendor|supply|ci\/cd|build|dependency/.test(text))
     sigs.push("upstream dependency referenced");
-  if (d === "insider" && /insider|contractor|disgrunt/.test(text)) sigs.push("insider scenario flagged");
-  if (d === "data" && /exfil|encrypt|leak|dump|ransom/.test(text)) sigs.push("data-disposition objective");
-  if (d === "network" && /phish|email|edge|vpn|c2/.test(text)) sigs.push("network surface exposure");
+  if (d === "insider" && /insider|contractor|disgrunt/.test(text))
+    sigs.push("insider scenario flagged");
+  if (d === "data" && /exfil|encrypt|leak|dump|ransom/.test(text))
+    sigs.push("data-disposition objective");
+  if (d === "network" && /phish|email|edge|vpn|c2/.test(text))
+    sigs.push("network surface exposure");
   for (const id of ttps) {
     const t = TECHNIQUES.find((x) => x.id === id);
     if (!t) continue;
@@ -608,7 +587,8 @@ function domainTriggers(d: DomainKey, s: ScenarioState, ttps: string[]): string[
 
 function inferNodeDomain(label: string, activated: DomainKey[]): DomainKey {
   const t = label.toLowerCase();
-  if (/sso|mfa|token|sess|cred|user|account|kerber/.test(t)) return pickFrom(["identity"], activated);
+  if (/sso|mfa|token|sess|cred|user|account|kerber/.test(t))
+    return pickFrom(["identity"], activated);
   if (/phish|email|edge|c2|beacon|dns|tunnel|vpn/.test(t)) return pickFrom(["network"], activated);
   if (/edr|lsass|powershell|wmi|persist|scheduled|registry|process/.test(t))
     return pickFrom(["endpoint"], activated);

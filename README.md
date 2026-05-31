@@ -166,19 +166,16 @@ Live UI progress uses SSE. The frontend generates a `run_id`, opens
 `GET /run/{run_id}/events`, then calls `POST /run` with the same id. If
 `KAFKA_BOOTSTRAP` is unset, the graph still runs but the event stream is empty.
 
-See [ARCH.md](ARCH.md) for bus design decisions.
+### Verify the event bus
 
-### Manual acceptance (before merge to main)
-
-With the stack running (`docker compose up`), verify the bus:
+With the stack running (`docker compose up`), run:
 
 ```bash
 chmod +x scripts/smoke_kafka_bus.sh
 ./scripts/smoke_kafka_bus.sh
 ```
 
-Runs serde/summary tests, checks `/health`, and lists Redpanda topics when compose is up.
-POST `/run` requires Azure keys and is exercised via the UI. Client POST timeout is 10 minutes.
+Runs bus unit tests, checks `/health`, and lists Redpanda topics when compose is up.
 
 Start the full stack:
 

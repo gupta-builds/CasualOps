@@ -12,3 +12,15 @@ ignore = []
 
 [tool.pyright]
 extraPaths = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q -p no:pytest_ethereum -p no:asyncio"
+markers = [
+    "kafka: integration tests that require a reachable KAFKA_BOOTSTRAP broker",
+]
+filterwarnings = [
+    "ignore:The copy keyword is deprecated and will be removed in a future version.*",
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated.*",
+]

@@ -180,9 +180,7 @@ export async function enqueueRun(
     }
 
     const text = json ? JSON.stringify(json).slice(0, 200) : "";
-    throw new Error(
-      `Backend returned ${res.status} ${res.statusText}${text ? `: ${text}` : ""}`,
-    );
+    throw new Error(`Backend returned ${res.status} ${res.statusText}${text ? `: ${text}` : ""}`);
   } catch (err) {
     if (err instanceof SchemaValidationError) {
       throw err;

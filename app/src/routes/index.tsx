@@ -111,7 +111,7 @@ function Index() {
     async (entry: HistoryEntry) => {
       try {
         const isCurrent = entry.id === activeHistoryId;
-        const canvas = isCurrent ? graphRef.current?.getCanvas() ?? null : null;
+        const canvas = isCurrent ? (graphRef.current?.getCanvas() ?? null) : null;
         await exportRunReport(entry, canvas);
         toast.success("PDF exported", { description: `hivemind-${entry.runId}.pdf` });
       } catch (err) {
@@ -148,16 +148,11 @@ function Index() {
   }, []);
 
   const currentEntry: HistoryEntry | null =
-    activeHistoryId != null
-      ? history.find((h) => h.id === activeHistoryId) ?? null
-      : null;
+    activeHistoryId != null ? (history.find((h) => h.id === activeHistoryId) ?? null) : null;
   const showStream = events.length > 0;
   const derived = result ? computeDerivedMetrics(result) : null;
   const observability = useMemo(
-    () =>
-      result
-        ? buildObservabilityTrace(scenarioFields, scenarioTtps, result)
-        : null,
+    () => (result ? buildObservabilityTrace(scenarioFields, scenarioTtps, result) : null),
     [result, scenarioFields, scenarioTtps],
   );
 
@@ -287,10 +282,7 @@ function Index() {
 
         {mode === "analyst" && !result && !errorMsg && !showStream && (
           <div className="glass flex items-center justify-center gap-3 rounded-2xl px-6 py-12 text-sm text-muted-foreground">
-            <Radar
-              className="h-4 w-4 text-[color:var(--neon-cyan)]/70"
-              aria-hidden
-            />
+            <Radar className="h-4 w-4 text-[color:var(--neon-cyan)]/70" aria-hidden />
             Build a scenario above and Run to see strategies, causal graph, and impact.
           </div>
         )}
@@ -335,7 +327,9 @@ function Index() {
       )}
 
       <footer className="mt-16 text-center font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground/60">
-        HiveMind · Causal Execution Framework · <span className="text-foreground/60">E</span> mode · <span className="text-foreground/60">H</span> history · <span className="text-foreground/60">P</span> presenter
+        HiveMind · Causal Execution Framework · <span className="text-foreground/60">E</span> mode ·{" "}
+        <span className="text-foreground/60">H</span> history ·{" "}
+        <span className="text-foreground/60">P</span> presenter
       </footer>
     </main>
   );

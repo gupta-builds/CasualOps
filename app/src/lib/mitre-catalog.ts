@@ -28,7 +28,12 @@ export interface Tactic {
 
 export const TACTICS: Tactic[] = [
   { id: "reconnaissance", shortLabel: "Recon", label: "Reconnaissance", order: 1 },
-  { id: "resource-development", shortLabel: "Resource Dev", label: "Resource Development", order: 2 },
+  {
+    id: "resource-development",
+    shortLabel: "Resource Dev",
+    label: "Resource Development",
+    order: 2,
+  },
   { id: "initial-access", shortLabel: "Initial Access", label: "Initial Access", order: 3 },
   { id: "execution", shortLabel: "Execution", label: "Execution", order: 4 },
   { id: "persistence", shortLabel: "Persistence", label: "Persistence", order: 5 },
@@ -48,8 +53,8 @@ export function tacticById(id: TacticId): Tactic {
 }
 
 export interface Technique {
-  id: string;            // e.g. "T1566.001"
-  name: string;          // e.g. "Spearphishing Attachment"
+  id: string; // e.g. "T1566.001"
+  name: string; // e.g. "Spearphishing Attachment"
   tactic: TacticId;
   // keywords used by the decomposer to match free text
   keywords: string[];
@@ -81,7 +86,17 @@ export const TECHNIQUES: Technique[] = [
     id: "T1190",
     name: "Exploit Public-Facing Application",
     tactic: "initial-access",
-    keywords: ["zero-day", "0day", "cve", "perimeter", "exposed", "vpn", "edge", "appliance", "rce"],
+    keywords: [
+      "zero-day",
+      "0day",
+      "cve",
+      "perimeter",
+      "exposed",
+      "vpn",
+      "edge",
+      "appliance",
+      "rce",
+    ],
     detection: "WAF anomaly + outbound from DMZ to attacker infra",
     mitigation: "Patch SLA, virtual patching, network segmentation",
   },
@@ -105,7 +120,15 @@ export const TECHNIQUES: Technique[] = [
     id: "T1078",
     name: "Valid Accounts",
     tactic: "initial-access",
-    keywords: ["sso", "okta", "session", "valid account", "stolen credential", "session cookie", "token"],
+    keywords: [
+      "sso",
+      "okta",
+      "session",
+      "valid account",
+      "stolen credential",
+      "session cookie",
+      "token",
+    ],
     detection: "Anomalous IP / device on existing session",
     mitigation: "Token binding, short session TTLs, device posture",
   },
@@ -348,7 +371,5 @@ export function techniqueById(id: string): Technique | undefined {
 /** Sort techniques by tactic order, preserving input order within a tactic. */
 export function sortByTactic(ids: string[]): Technique[] {
   const techs = ids.map(techniqueById).filter((t): t is Technique => Boolean(t));
-  return techs.sort(
-    (a, b) => tacticById(a.tactic).order - tacticById(b.tactic).order,
-  );
+  return techs.sort((a, b) => tacticById(a.tactic).order - tacticById(b.tactic).order);
 }

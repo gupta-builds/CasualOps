@@ -151,9 +151,13 @@ export const InputPanel = forwardRef<InputPanelHandle, InputPanelProps>(function
       <div className="mt-5 flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span>
-            <kbd className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px]">⌘</kbd>{" "}
+            <kbd className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px]">
+              ⌘
+            </kbd>{" "}
             +{" "}
-            <kbd className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px]">↵</kbd>{" "}
+            <kbd className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px]">
+              ↵
+            </kbd>{" "}
             execute
           </span>
           <span className="text-muted-foreground/40">·</span>

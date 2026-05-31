@@ -66,11 +66,7 @@ export function PromptToolbar({
           )}
           title="Tighten draft with Lovable AI"
         >
-          {refining ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : (
-            <Wand2 className="h-3 w-3" />
-          )}
+          {refining ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
           Refine with AI
           <Sparkles className="h-3 w-3 opacity-70" />
         </button>

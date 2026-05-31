@@ -45,10 +45,7 @@ export function RefinementPanel({ suggestions, onAccept }: Props) {
         {visible.map((s) => {
           const k = kindLabel[s.kind];
           return (
-            <div
-              key={s.id}
-              className="rounded-lg border border-white/5 bg-white/[0.02] p-3"
-            >
+            <div key={s.id} className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
               <div className="mb-1 flex items-center gap-2">
                 <span
                   className={cn(
@@ -60,13 +57,13 @@ export function RefinementPanel({ suggestions, onAccept }: Props) {
                 </span>
                 <span className="text-xs font-medium text-foreground/90">{s.title}</span>
               </div>
-              <p className="mb-2 text-[11px] leading-snug text-muted-foreground">
-                {s.detail}
-              </p>
+              <p className="mb-2 text-[11px] leading-snug text-muted-foreground">{s.detail}</p>
               <div className="flex items-start gap-1.5 rounded-md border border-amber-400/20 bg-amber-500/[0.04] p-2 text-[10px] text-amber-200/90">
                 <Lightbulb className="mt-0.5 h-2.5 w-2.5 shrink-0" />
                 <span className="leading-snug">
-                  <span className="font-mono uppercase tracking-wider text-amber-300/80">why · </span>
+                  <span className="font-mono uppercase tracking-wider text-amber-300/80">
+                    why ·{" "}
+                  </span>
                   {s.rationale}
                 </span>
               </div>

@@ -10,8 +10,8 @@ from __future__ import annotations
 import logging
 from typing import Literal
 
-from langgraph.constants import Send
 from langgraph.graph import END, START, StateGraph
+from langgraph.types import Send
 
 from agents import child_agent_node, grand_orchestrator_node, parent_agent_node
 from bus.helpers import bind_from_state

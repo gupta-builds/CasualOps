@@ -1,6 +1,12 @@
 import { Code2, Download, FileText, Network } from "lucide-react";
 import { toast } from "sonner";
-import { toMitreJson, toYaml, toExecutiveSummary, type ScenarioState, buildKillChain } from "@/lib/scenario-builder";
+import {
+  toMitreJson,
+  toYaml,
+  toExecutiveSummary,
+  type ScenarioState,
+  buildKillChain,
+} from "@/lib/scenario-builder";
 
 interface Props {
   state: ScenarioState;
