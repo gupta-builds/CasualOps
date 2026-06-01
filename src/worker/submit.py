@@ -14,6 +14,10 @@ async def submit_spawn_envelope(envelope: EventEnvelope) -> None:
     from worker.dispatch import dispatch_spawn_envelope
 
     if kafka_enabled():
-        await asyncio.to_thread(publish_envelope_sync, envelope)
+        published = await asyncio.to_thread(publish_envelope_sync, envelope)
+        if not published:
+            raise RuntimeError(
+                "Kafka spawn command publish failed; work was not enqueued."
+            )
         return
     await dispatch_spawn_envelope(envelope)

@@ -61,7 +61,7 @@ def test_submit_spawn_envelope_dispatches_inline_without_kafka(
     )
 
     dispatch = AsyncMock()
-    publish = Mock()
+    publish = Mock(return_value=True)
 
     async def run() -> None:
         with patch("worker.dispatch.dispatch_spawn_envelope", dispatch):
@@ -95,6 +95,35 @@ def test_submit_spawn_envelope_publishes_when_kafka_enabled(
         with patch("worker.dispatch.dispatch_spawn_envelope", dispatch):
             with patch("worker.submit.publish_envelope_sync", publish):
                 await submit_spawn_envelope(envelope)
+
+        publish.assert_called_once_with(envelope)
+        dispatch.assert_not_called()
+
+    asyncio.run(run())
+
+
+def test_submit_spawn_envelope_fails_fast_when_kafka_publish_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KAFKA_BOOTSTRAP", "localhost:19092")
+
+    envelope = EventEnvelope(
+        run_id="run-kafka-route-fail",
+        correlation_id="run-kafka-route-fail",
+        agent_id="coordinator",
+        tier="control",
+        artifact_type=ArtifactType.RUN_PARENT,
+        payload={"task_id": "p1"},
+    )
+
+    dispatch = AsyncMock()
+    publish = Mock(return_value=False)
+
+    async def run() -> None:
+        with patch("worker.dispatch.dispatch_spawn_envelope", dispatch):
+            with patch("worker.submit.publish_envelope_sync", publish):
+                with pytest.raises(RuntimeError, match="work was not enqueued"):
+                    await submit_spawn_envelope(envelope)
 
         publish.assert_called_once_with(envelope)
         dispatch.assert_not_called()

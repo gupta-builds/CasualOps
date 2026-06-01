@@ -103,7 +103,7 @@ async def run_spawn_consumer(*, stop_event: asyncio.Event | None = None) -> None
         TOPIC_SPAWN,
         bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP", "").strip(),
         group_id="hivemind-workers",
-        auto_offset_reset="latest",
+        auto_offset_reset="earliest",
         enable_auto_commit=False,
     )
     await consumer.start()

@@ -151,16 +151,16 @@ def publish_bytes_sync(
     value: bytes,
     *,
     key: bytes | None = None,
-) -> None:
+) -> bool:
     """Publish raw bytes from sync code via the dedicated worker loop."""
 
     if not kafka_enabled():
-        return
+        return True
 
     loop = _worker_loop
     if loop is None or not loop.is_running():
         logger.warning("Kafka publish skipped: worker loop not running")
-        return
+        return False
 
     future = asyncio.run_coroutine_threadsafe(
         publish_bytes(topic, value, key=key),
@@ -168,27 +168,31 @@ def publish_bytes_sync(
     )
     try:
         future.result(timeout=15)
+        return True
     except Exception:
         logger.exception("Kafka publish failed for topic %s", topic)
+        return False
 
 
-def publish_envelope_sync(envelope: EventEnvelope) -> None:
+def publish_envelope_sync(envelope: EventEnvelope) -> bool:
     """Publish from sync LangGraph nodes via the dedicated worker loop."""
 
     if not kafka_enabled():
-        return
+        return True
 
     loop = _worker_loop
     if loop is None or not loop.is_running():
         logger.warning("Kafka publish skipped: worker loop not running")
-        return
+        return False
 
     future = asyncio.run_coroutine_threadsafe(publish_envelope(envelope), loop)
     try:
         future.result(timeout=15)
+        return True
     except Exception:
         logger.exception(
             "Kafka publish failed for %s/%s",
             envelope.artifact_type,
             envelope.run_id,
         )
+        return False

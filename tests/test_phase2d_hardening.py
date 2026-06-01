@@ -79,3 +79,40 @@ def test_spawn_dispatch_failure_publishes_dlq(
 
 def test_dlq_topic_constant() -> None:
     assert TOPIC_DLQ == "hivemind.dlq"
+
+
+def test_spawn_consumer_reads_existing_unclaimed_work(monkeypatch) -> None:
+    """Fresh worker groups should not skip commands published before assignment."""
+
+    created: dict[str, object] = {}
+
+    class FakeConsumer:
+        def __init__(self, *topics, **kwargs):
+            created["topics"] = topics
+            created["kwargs"] = kwargs
+
+        async def start(self):
+            created["started"] = True
+
+        async def stop(self):
+            created["stopped"] = True
+
+        async def getmany(self, **_kwargs):
+            return {}
+
+    monkeypatch.setenv("KAFKA_BOOTSTRAP", "redpanda:9092")
+    monkeypatch.setattr(spawn_consumer, "AIOKafkaConsumer", FakeConsumer)
+
+    async def run() -> None:
+        stop_event = asyncio.Event()
+        stop_event.set()
+        await spawn_consumer.run_spawn_consumer(stop_event=stop_event)
+
+    asyncio.run(run())
+
+    assert created["topics"] == (TOPIC_SPAWN,)
+    assert created["kwargs"]["group_id"] == "hivemind-workers"
+    assert created["kwargs"]["auto_offset_reset"] == "earliest"
+    assert created["kwargs"]["enable_auto_commit"] is False
+    assert created["started"] is True
+    assert created["stopped"] is True
