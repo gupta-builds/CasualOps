@@ -50,6 +50,30 @@ async def execute_run(
         await _dispatch_children(record, run_store)
         await _run_evaluator(record, run_store)
         await _run_causal_loop(record, run_store)
+        await _run_reasoner(record, run_store)
+
+        # Build 5D Spatiotemporal KG Graph.
+        #
+        # When Kafka is enabled the graph is continuously streamed in by the
+        # worker's graph consumer (graph_5d_stream) using real event times, so a
+        # batch rebuild here would only duplicate edges at synthetic timestamps.
+        # In inline/no-Kafka mode there is no stream, so reconstruct from the
+        # final record state as a backfill.
+        from bus.producer import kafka_enabled
+
+        if not kafka_enabled():
+            try:
+                from graph_5d import connect_graph_db, reconstruct_5d_graph
+
+                conn = connect_graph_db()
+                try:
+                    with conn:
+                        reconstruct_5d_graph(conn, run_id, record)
+                finally:
+                    conn.close()
+            except Exception as exc:
+                logger.exception("Failed to build 5D spatiotemporal graph: %s", exc)
+
         record.status = "completed"
         run_store.save(record)
     except Exception:
@@ -153,3 +177,13 @@ async def _run_causal_loop(record: RunRecord, store: RunStore) -> None:
 
         if refutation_next_step(record.to_graph_state()) == "end":
             break
+
+
+async def _run_reasoner(record: RunRecord, store: RunStore) -> None:
+    from reasoning import reasoning_node
+
+    store.set_phase(record, "reasoning")
+    state = record.to_graph_state()
+    update = await asyncio.to_thread(reasoning_node, state)
+    record.apply_node_update(update)
+    store.save(record)

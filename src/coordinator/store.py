@@ -55,6 +55,7 @@ class RunRecord:
     dowhy_results: dict[str, Any] | None = None
     causal_dataset_profile: dict[str, Any] | None = None
     causal_estimate_report: dict[str, Any] | None = None
+    reasoning_report: dict[str, Any] | None = None
     expected_parent_count: int = 0
     completed_parent_count: int = 0
     expected_child_count: int = 0
@@ -81,6 +82,7 @@ class RunRecord:
             "evidence_records": self.evidence_records,
             "causal_dataset_profile": self.causal_dataset_profile,
             "causal_estimate_report": self.causal_estimate_report,
+            "reasoning_report": self.reasoning_report,
         }
 
     def apply_node_update(self, update: dict[str, Any]) -> None:
@@ -103,6 +105,7 @@ class RunRecord:
             "dowhy_results",
             "causal_dataset_profile",
             "causal_estimate_report",
+            "reasoning_report",
         ):
             if key in update:
                 setattr(self, key, update[key])
@@ -136,37 +139,68 @@ class RunStore:
         self._init_schema()
 
     def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(str(self.db_path), timeout=30.0)
         conn.row_factory = sqlite3.Row
+        try:
+            # Rollback-journal (not WAL): WAL needs shared-memory mmap of a -shm
+            # file, which is unreliable on Docker bind-mounted volumes (virtiofs/
+            # gRPC-FUSE behave like a network FS) and surfaces as "disk I/O
+            # error" / "locking protocol". DELETE mode uses only POSIX locks; a
+            # generous busy_timeout lets concurrent api/worker access queue
+            # instead of failing.
+            conn.execute("PRAGMA journal_mode=DELETE;")
+            conn.execute("PRAGMA busy_timeout=30000;")
+            conn.execute("PRAGMA synchronous=NORMAL;")
+        except sqlite3.OperationalError:
+            pass
         return conn
 
     def _init_schema(self) -> None:
-        with self._connect() as conn:
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS runs (
-                    run_id TEXT PRIMARY KEY,
-                    correlation_id TEXT NOT NULL,
-                    task_description TEXT NOT NULL,
-                    phase TEXT NOT NULL DEFAULT 'created',
-                    status TEXT NOT NULL DEFAULT 'running',
-                    state_json TEXT NOT NULL,
-                    created_at TEXT NOT NULL,
-                    updated_at TEXT NOT NULL
+        conn = self._connect()
+        try:
+            with conn:
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS runs (
+                        run_id TEXT PRIMARY KEY,
+                        correlation_id TEXT NOT NULL,
+                        task_description TEXT NOT NULL,
+                        phase TEXT NOT NULL DEFAULT 'created',
+                        status TEXT NOT NULL DEFAULT 'running',
+                        state_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        updated_at TEXT NOT NULL
+                    )
+                    """
                 )
-                """
-            )
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS idempotency_claims (
-                    run_id TEXT NOT NULL,
-                    idempotency_key TEXT NOT NULL,
-                    status TEXT NOT NULL DEFAULT 'claimed',
-                    claimed_at TEXT NOT NULL,
-                    PRIMARY KEY (run_id, idempotency_key)
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS idempotency_claims (
+                        run_id TEXT NOT NULL,
+                        idempotency_key TEXT NOT NULL,
+                        status TEXT NOT NULL DEFAULT 'claimed',
+                        claimed_at TEXT NOT NULL,
+                        PRIMARY KEY (run_id, idempotency_key)
+                    )
+                    """
                 )
-                """
-            )
+        finally:
+            conn.close()
+
+    def get_5d_graph(self, run_id: str) -> dict[str, Any]:
+        """Fetch the compiled 5D spatiotemporal graph nodes and edges.
+
+        Reads from the dedicated graph DB (written by the worker's stream
+        consumer), not runs.db.
+        """
+
+        from graph_5d import connect_graph_db, get_5d_graph as fetch_5d
+        conn = connect_graph_db()
+        try:
+            with conn:
+                return fetch_5d(conn, run_id)
+        finally:
+            conn.close()
 
     def create_run(
         self,
@@ -397,6 +431,7 @@ def _record_to_json(record: RunRecord) -> dict[str, Any]:
         "dowhy_results": record.dowhy_results,
         "causal_dataset_profile": record.causal_dataset_profile,
         "causal_estimate_report": record.causal_estimate_report,
+        "reasoning_report": record.reasoning_report,
         "expected_parent_count": record.expected_parent_count,
         "completed_parent_count": record.completed_parent_count,
         "expected_child_count": record.expected_child_count,
@@ -426,6 +461,7 @@ def _record_from_json(data: dict[str, Any]) -> RunRecord:
         dowhy_results=data.get("dowhy_results"),
         causal_dataset_profile=data.get("causal_dataset_profile"),
         causal_estimate_report=data.get("causal_estimate_report"),
+        reasoning_report=data.get("reasoning_report"),
         expected_parent_count=int(data.get("expected_parent_count", 0)),
         completed_parent_count=int(data.get("completed_parent_count", 0)),
         expected_child_count=int(data.get("expected_child_count", 0)),

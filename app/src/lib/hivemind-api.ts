@@ -242,5 +242,23 @@ export async function runCausalEngine(
   return fetchRunResult(enqueued.run_id);
 }
 
+export interface Graph5DResponse {
+  nodes: Array<Record<string, unknown>>;
+  edges: Array<Record<string, unknown>>;
+}
+
+export async function fetch5DGraph(runId: string): Promise<Graph5DResponse> {
+  const res = await fetch(`${getApiBase()}/run/${encodeURIComponent(runId)}/graph/5d`, {
+    headers: { "Bypass-Tunnel-Reminder": "true" },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(
+      `Failed to fetch 5D graph (${res.status})${text ? `: ${text.slice(0, 200)}` : ""}`,
+    );
+  }
+  return await res.json();
+}
+
 export { SchemaValidationError, parseRunResponse };
 export { extractRunArtifact } from "./hivemind-schema";
