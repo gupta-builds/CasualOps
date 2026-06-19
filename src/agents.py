@@ -11,6 +11,7 @@ import logging
 from typing import Any
 
 from langchain_core.prompts import ChatPromptTemplate
+from openai import ContentFilterFinishReasonError
 from pydantic import BaseModel
 
 from bus.events import ArtifactType
@@ -193,6 +194,17 @@ child_agent_chain = child_agent_prompt | low_temp_llm.with_structured_output(
     DecisionMemo
 )
 
+def _fallback_memo(state: ChildState, reason: str) -> DecisionMemo:
+    """Return a minimal memo when the LLM call fails."""
+    return DecisionMemo(
+        perspective=state["persona"],
+        strategy=f"[UNAVAILABLE - {reason}]",
+        assumptions=[],
+        risks=["Memo could not be generated; review manually."],
+        second_order_effects=[],
+        evidence_needs=["Manual analyst review required."],
+        confidence="Low",
+    )
 
 def child_agent_node(state: ChildState) -> dict[str, list[DecisionMemo]]:
     """Produce one evidence-aware decision memo from a child agent."""
@@ -208,7 +220,7 @@ def child_agent_node(state: ChildState) -> dict[str, list[DecisionMemo]]:
     )
 
     logger.info("Child agent [%s] synthesizing memo", state["persona"])
-    try:
+    try: 
         memo = child_agent_chain.invoke(
             {
                 "persona": state["persona"],
@@ -218,20 +230,25 @@ def child_agent_node(state: ChildState) -> dict[str, list[DecisionMemo]]:
                 "policy_context": _policy_context(state.get("policy")),
             }
         )
+        logger.info("Child agent [%s] completed memo", state["persona"])
+    except ContentFilterFinishReasonError:
+        logger.warning(
+            "Child agent [%s] blocked by content filter - using fallback",
+            state["persona"],
+        )
+        publish_telemetry(
+            agent_id=agent_id,
+            tier="child",
+            phase="ERROR",
+            message=f"Child [{state['persona']}] blocked by content filter",
+            status="error"
+        )
+        memo = _fallback_memo(state, "blocked by azure content filter")
     except Exception as exc:
-        error_name = type(exc).__name__
-        if "ContentFilter" in error_name:
-            message = f"Child [{state['persona']}] blocked by content filter: {exc}"
-            logger.error(message)
-            publish_telemetry(
-                agent_id=agent_id,
-                tier="child",
-                phase="ERROR",
-                message=message,
-                status="error",
-            )
-        raise
-    logger.info("Child agent [%s] completed memo", state["persona"])
+        logger.error(
+            "Child agent [%s] failed unexpectedly: %s", state["persona"], exc
+        )
+        memo = _fallback_memo(state, f"Unexpected error: {exc}")
 
     if isinstance(memo, dict):
         memo = DecisionMemo(**memo)
@@ -242,6 +259,7 @@ def child_agent_node(state: ChildState) -> dict[str, list[DecisionMemo]]:
         artifact_type=ArtifactType.DECISION_MEMO,
         payload=memo.model_dump(),
     )
+
     publish_telemetry(
         agent_id=agent_id,
         tier="child",
