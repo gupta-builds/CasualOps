@@ -1,7 +1,14 @@
 venv/
+.venv/
 __pycache__/
 *.pyc
 .env
 data/
 .DS_Store
 app/node_modules/
+
+.kiro/
+.claude/
+.cursor/
+Docs/
+AGENTS.md

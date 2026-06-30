@@ -71,5 +71,7 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    env_file:
+      - .env
     ports:
       - "8080:8080"
