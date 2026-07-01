@@ -44,6 +44,7 @@ async def execute_run(
         )
 
     try:
+        await _run_memory_retrieve(record, run_store)
         await _run_orchestrator(record, run_store)
         await _run_parent_evolution(record, run_store)
         await _dispatch_parents(record, run_store)
@@ -71,6 +72,8 @@ async def execute_run(
         if not kafka_enabled():
             await asyncio.to_thread(_ingest_policy_optimization, record)
 
+        await _run_memory_write(record, run_store)
+
         record.status = "completed"
         run_store.save(record)
     except Exception:
@@ -79,6 +82,42 @@ async def execute_run(
         raise
 
     return record.to_graph_state()
+
+
+async def _run_memory_retrieve(record: RunRecord, store: RunStore) -> None:
+    """Retrieve similar past runs before the orchestrator decomposes this one.
+
+    Memory is additive, never required: any failure here is logged and
+    swallowed so a Supabase/embedding outage can't fail a HiveMind run.
+    """
+
+    from memory.nodes import memory_retrieve_node
+
+    store.set_phase(record, "memory_retrieve")
+    state = record.to_graph_state()
+    try:
+        update = await memory_retrieve_node(state)
+        record.apply_node_update(update)
+    except Exception:
+        logger.exception("memory_retrieve_node failed; continuing without context")
+    store.save(record)
+
+
+async def _run_memory_write(record: RunRecord, store: RunStore) -> None:
+    """Persist the completed run to memory after all learning phases finish.
+
+    Same non-fatal guarantee as _run_memory_retrieve.
+    """
+
+    from memory.nodes import memory_write_node
+
+    store.set_phase(record, "memory_write")
+    state = record.to_graph_state()
+    try:
+        await memory_write_node(state)
+    except Exception:
+        logger.exception("memory_write_node failed; run result is unaffected")
+    store.save(record)
 
 
 async def _run_orchestrator(record: RunRecord, store: RunStore) -> None:

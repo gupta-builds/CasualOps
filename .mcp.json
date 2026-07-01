@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "hivemind-memory": {
+      "command": "/home/anant_gupta/projects/hub/CausalOps/.venv/bin/python",
+      "args": ["-m", "memory.mcp_server"],
+      "cwd": "/home/anant_gupta/projects/hub/CausalOps/src",
+      "env": {
+        "SUPABASE_URL": "${SUPABASE_URL}",
+        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}",
+        "AZURE_OPENAI_ENDPOINT": "${AZURE_OPENAI_ENDPOINT}",
+        "AZURE_OPENAI_API_KEY": "${AZURE_OPENAI_API_KEY}",
+        "AZURE_OPENAI_API_VERSION": "${AZURE_OPENAI_API_VERSION}",
+        "AZURE_OPENAI_EMBEDDING_DEPLOYMENT": "${AZURE_OPENAI_EMBEDDING_DEPLOYMENT}"
+      }
+    },
+    "supabase": {
+      "command": "npx",
+      "args": ["-y", "@supabase/mcp-server-supabase@latest",
+               "--read-only",
+               "--project-ref", "glbmdbwqmuttykhicasq"],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
+      }
+    }
+  }
+}

@@ -75,3 +75,20 @@ services:
       - .env
     ports:
       - "8080:8080"
+
+  mcp:
+    build: .
+    command: sh -c "cd src && python -m memory.mcp_server"
+    env_file:
+      - .env
+    environment:
+      MCP_TRANSPORT: sse
+      MCP_PORT: "8001"
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped

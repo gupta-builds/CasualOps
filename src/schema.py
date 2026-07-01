@@ -323,6 +323,11 @@ class GraphState(TypedDict):
     agent_evolution_report: dict[str, Any] | None
     policy_optimization_report: dict[str, Any] | None
 
+    # Memory layer: populated by memory_retrieve_node, consumed by
+    # grand_orchestrator_node. Structured, not pre-formatted text — formatting
+    # into a prompt string happens in agents.py's _format_memory_context().
+    memory_context: list[dict[str, Any]] | None
+
 
 class ParentState(TypedDict):
     """State for Parent Agent node execution."""

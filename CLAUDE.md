@@ -12,10 +12,32 @@ Five components:
 1. **Vector store** — every completed run is embedded (`text-embedding-3-small` via Azure) and stored in Supabase pgvector. New incidents retrieve the 3 most similar past runs before the orchestrator decomposes them.
 2. **Knowledge graph** — entities (assets, MITRE techniques, CVEs, graph nodes) extracted from evidence records and causal graphs are persisted as nodes and edges across runs.
 3. **Temporal indexing** — cosine similarity is multiplied by `exp(-0.023 * age_in_days)` (30-day half-life decay).
-4. **MCP server** — FastMCP instance mounted at `/mcp` on the FastAPI app: `search_similar_incidents`, `get_entity_relationships`, `get_asset_timeline`, `write_run_to_memory`.
+4. **MCP server** — Standalone FastMCP process — runs as `python -m memory.mcp_server` on port 8001. api.py is NOT modified. See docker-compose.yml mcp service. Tools: `search_similar_incidents`, `get_entity_relationships`, `get_asset_timeline`, `write_run_to_memory`.
 5. **Agent integration** — `memory_retrieve` node before orchestrator, `memory_write` node after DoWhy, orchestrator prompt extended with past context.
 
-**Status:** Awaiting Azure embedding deployment + Supabase service role key. Do NOT write implementation code until credentials are confirmed in `.env`.
+**Status:** Complete. All src/memory/ files written, coordinator phases wired,
+RunRecord serialization updated, agents.py memory_context injection done,
+10 unit tests passing. Supabase project provisioned (ID: glbmdbwqmuttykhicasq).
+PENDING: Run SQL migration on the Supabase project, then run integration tests.
+
+## Real Execution Path (Phase 2b)
+
+graph.py is NOT executed in production. Its own docstring says "Deprecated for execution
+in Phase 2b+." The real execution path is:
+
+    src/coordinator/runner.py::execute_run()
+
+This is an async state machine that calls phases sequentially, persisting state to
+SQLite (data/runs.db) via RunRecord (src/coordinator/store.py) between each phase.
+
+Phase sequence:
+  memory_retrieve → orchestrator → parent_evolution → parents (Kafka barrier)
+  → gather_children → child_evolution → children (Kafka barrier) → evaluator
+  → causal_loop (synthesis + dowhy, retries) → reasoner → policy_learning
+  → memory_write → completed
+
+Memory phases are awaited directly (already async). All other phases use asyncio.to_thread.
+Memory phase exceptions are swallowed — a Supabase outage must never fail a run.
 
 ## Repository Structure
 
@@ -40,7 +62,7 @@ src/
     extractor.py      ← Deterministic entity extraction from run artifacts
     store.py          ← SupabaseMemoryStore (4 methods)
     nodes.py          ← memory_retrieve_node, memory_write_node
-    mcp_server.py     ← FastMCP instance + 4 tools, mounted in api.py
+    mcp_server.py     ← FastMCP instance + 4 tools, standalone process, not imported by api.py
 
 app/src/integrations/supabase/
   client.ts           ← Supabase JS client (frontend, anon key)
@@ -50,24 +72,30 @@ app/src/integrations/supabase/
 ## Environment Variables
 
 ```bash
-# Existing
+# Chat LLM — Gemini (NOT Azure OpenAI)
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-2.5-flash          # or gemini-2.5-pro for complex reasoning tasks
+GEMINI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+
+# Azure OpenAI — embeddings ONLY (memory layer, not chat)
 AZURE_OPENAI_ENDPOINT=
 AZURE_OPENAI_API_KEY=
-AZURE_OPENAI_DEPLOYMENT=gpt-4o
 AZURE_OPENAI_API_VERSION=2024-08-01-preview
-
-# New (needed before implementing memory layer)
 AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-3-small
 
 # Supabase — client (VITE_ prefix, safe in browser)
-VITE_SUPABASE_URL=https://lejmpbxchamaqjfclfyz.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=       # anon/public key
-VITE_SUPABASE_PROJECT_ID=lejmpbxchamaqjfclfyz
+VITE_SUPABASE_URL=https://<new-project-ref>.supabase.co   # set after provisioning
+VITE_SUPABASE_PUBLISHABLE_KEY=
+VITE_SUPABASE_PROJECT_ID=<new-project-ref>
 
-# Supabase — server (secrets)
-SUPABASE_URL=https://lejmpbxchamaqjfclfyz.supabase.co
-SUPABASE_PUBLISHABLE_KEY=            # same anon key (auth middleware)
-SUPABASE_SERVICE_ROLE_KEY=           # service_role key — NOT anon key
+# Supabase — server (secrets — never use anon key in Python backend)
+SUPABASE_URL=https://<new-project-ref>.supabase.co
+SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=             # REQUIRED for all Python backend writes (RLS)
+
+# HiveMind runtime
+HIVEMIND_ENABLE_SPAWN_WORKER=0         # "1" → in-process spawn worker (api container only)
+KAFKA_BOOTSTRAP=localhost:19092        # only needed outside compose
 ```
 
 ## Python Conventions
@@ -102,13 +130,15 @@ curl http://localhost:8000/demo/estimate
 # Health check
 curl http://localhost:8000/health
 
-# MCP server (after implementation)
-curl http://localhost:8000/mcp
+# Memory MCP server (standalone)
+docker-compose up mcp        # starts on port 8001
+# or directly:
+cd src && python -m memory.mcp_server
 ```
 
 ## Supabase Schema (after migration)
 
-Project ID: `lejmpbxchamaqjfclfyz`
+Project ID: `glbmdbwqmuttykhicasq`
 
 Tables: `memory_runs`, `memory_entities`, `memory_entity_edges`
 RPC functions: `search_similar_runs(query_embedding, match_count, decay_lambda)`, `get_entity_neighborhood(p_entity_value, p_entity_type)`
@@ -116,7 +146,7 @@ RPC functions: `search_similar_runs(query_embedding, match_count, decay_lambda)`
 Regenerate TypeScript types after schema changes:
 ```bash
 npx supabase gen types typescript \
-  --project-id lejmpbxchamaqjfclfyz \
+  --project-id glbmdbwqmuttykhicasq \
   --schema public \
   > app/src/integrations/supabase/types.ts
 ```
@@ -130,11 +160,14 @@ START → memory_retrieve → orchestrator → [parallel parent_agents]
       → (retry → causal_synthesis | end → memory_write) → END
 ```
 
-## New Packages Required
+## Tests
 
 ```
-supabase==2.15.2
-openai==1.91.0
-fastmcp==3.2.4
-httpx==0.28.1
+pytest tests/              # full suite (integration tests skip without credentials)
+pytest tests/ -m "not integration and not kafka"   # unit tests only, zero credentials
+pytest tests/memory/       # memory layer tests only
+pytest tests/memory/ -m integration -v             # needs SUPABASE_* + AZURE_OPENAI_* in .env
 ```
+
+Unit tests (no credentials): test_extractor.py, test_mcp_tools.py
+Integration tests (`@pytest.mark.integration`): test_store.py, test_nodes.py

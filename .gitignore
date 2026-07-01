@@ -10,5 +10,6 @@ app/node_modules/
 .kiro/
 .claude/
 .cursor/
+src/graphify-out/
 Docs/
 AGENTS.md
