@@ -1,4 +1,4 @@
-"""Supabase-backed persistence for the HiveMind memory layer.
+"""Supabase-backed persistence for the CausalOps memory layer.
 
 Pure Python, no HTTP framework here. Always uses the service_role key —
 never the anon/publishable key, which is blocked from writing by RLS.

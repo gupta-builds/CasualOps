@@ -1,4 +1,4 @@
-"""Kafka consumer loop for executable hivemind.spawn commands."""
+"""Kafka consumer loop for executable causalops.spawn commands."""
 
 from __future__ import annotations
 
@@ -21,11 +21,11 @@ _SPAWN_COMMANDS = frozenset({ArtifactType.RUN_PARENT, ArtifactType.RUN_CHILD})
 
 
 def _spawn_max_retries() -> int:
-    return max(1, int(os.getenv("HIVEMIND_SPAWN_MAX_RETRIES", "2")))
+    return max(1, int(os.getenv("CAUSALOPS_SPAWN_MAX_RETRIES", "2")))
 
 
 def _spawn_retry_backoff_seconds() -> float:
-    return max(0.0, int(os.getenv("HIVEMIND_SPAWN_RETRY_BACKOFF_MS", "1000")) / 1000.0)
+    return max(0.0, int(os.getenv("CAUSALOPS_SPAWN_RETRY_BACKOFF_MS", "1000")) / 1000.0)
 
 
 async def _process_spawn_message(consumer: AIOKafkaConsumer, message) -> None:
@@ -102,7 +102,7 @@ async def run_spawn_consumer(*, stop_event: asyncio.Event | None = None) -> None
     consumer = AIOKafkaConsumer(
         TOPIC_SPAWN,
         bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP", "").strip(),
-        group_id="hivemind-workers",
+        group_id="causalops-workers",
         auto_offset_reset="earliest",
         enable_auto_commit=False,
     )

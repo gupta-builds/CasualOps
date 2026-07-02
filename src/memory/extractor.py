@@ -1,4 +1,4 @@
-"""Deterministic entity extraction from HiveMind run artifacts.
+"""Deterministic entity extraction from CausalOps run artifacts.
 
 No LLM calls. Mirrors the normalization style of ``evidence_adapters.py``:
 regex-gated field extraction over plain dicts.

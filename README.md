@@ -191,18 +191,18 @@ With Docker Compose, Kafka is enabled automatically via Redpanda:
 KAFKA_BOOTSTRAP=localhost:19092
 ```
 
-Topics: `hivemind.runs`, `hivemind.spawn`, `hivemind.artifacts`, `hivemind.telemetry`, `hivemind.evidence`, `hivemind.dlq`.
+Topics: `causalops.runs`, `causalops.spawn`, `causalops.artifacts`, `causalops.telemetry`, `causalops.evidence`, `causalops.dlq`.
 
 Compose runs three backend processes: **api** (coordinator + SSE, no spawn consumer), **worker** (spawn consumer), and **redpanda**. Both api and worker share `./data` for the SQLite run store.
 
 | Env var | Default (compose) | Purpose |
 |---------|-------------------|---------|
-| `HIVEMIND_ENABLE_SPAWN_WORKER` | `0` on api, `1` on worker | In-process spawn consumer in api when `1` |
-| `HIVEMIND_SPAWN_MAX_RETRIES` | `2` | Dispatch retries before DLQ |
-| `HIVEMIND_SPAWN_RETRY_BACKOFF_MS` | `1000` | Delay between spawn retries |
-| `HIVEMIND_DATA_DIR` | repo-root `data/` | Run artifacts, run store, and 5D graph SQLite files |
+| `CAUSALOPS_ENABLE_SPAWN_WORKER` | `0` on api, `1` on worker | In-process spawn consumer in api when `1` |
+| `CAUSALOPS_SPAWN_MAX_RETRIES` | `2` | Dispatch retries before DLQ |
+| `CAUSALOPS_SPAWN_RETRY_BACKOFF_MS` | `1000` | Delay between spawn retries |
+| `CAUSALOPS_DATA_DIR` | repo-root `data/` | Run artifacts, run store, and 5D graph SQLite files |
 
-For single-process local dev without the worker container, set `HIVEMIND_ENABLE_SPAWN_WORKER=1` on the api service.
+For single-process local dev without the worker container, set `CAUSALOPS_ENABLE_SPAWN_WORKER=1` on the api service.
 
 Live UI progress uses SSE. The frontend generates a `run_id`, opens
 `GET /run/{run_id}/events`, then calls `POST /run` with the same id. If
@@ -361,7 +361,7 @@ curl -X POST http://localhost:8000/normalize/incidents \
 - CORS restricted to local demo origins by default
 - ATE/p-value withheld when evidence gates fail
 - Evolution and policy-learning reports are published as Kafka artifacts
-- Run artifacts persisted under `HIVEMIND_DATA_DIR` (`data/` by default)
+- Run artifacts persisted under `CAUSALOPS_DATA_DIR` (`data/` by default)
 
 ---
 
@@ -381,7 +381,7 @@ curl -X POST http://localhost:8000/normalize/incidents \
 
 - **Production-Grade MCP Intelligence Fabric:** Build a distributed MCP client layer capable of dynamically discovering, authenticating, and routing across agentic topics within the swarm. Agents will interface with specialized cyber-oriented MCP servers providing contextual memory, threat intelligence enrichment, tool orchestration, policy enforcement, and reasoning augmentation. The long-term goal is a zero-trust, latency-aware intelligence plane for autonomous multi-agent coordination.
 - **Deep Hierarchical Agent Expansion:** Introduce additional recursive child-agent layers with adaptive spawning policies driven by task complexity, uncertainty, and resource availability. Runtime efficiency will be improved through asynchronous execution pipelines, speculative parallel reasoning, and distributed workload scheduling across heterogeneous compute environments.
-- **Full Distributed Execution** Production-grade bus-native architecture with horizontally scaled worker services (compose/k8s), a coordinator-only API container, and shared run state in Redis or Postgres (SQLite retained for local dev). Harden the bus with idempotency keys, retry policy, and dead-letter topics; version envelopes with Avro and Schema Registry. Expand `hivemind.evidence`, add S3/MinIO refs for large artifacts, in-flight run recovery after restarts, and observability (consumer lag, run-phase dashboards, DLQ alerting). Migrate via existing `WorkerExecutor` (in-process → remote) and `RunStore` (SQLite → Redis) interfaces while keeping spawn/artifact shapes and coordinator barrier rules unchanged.
+- **Full Distributed Execution** Production-grade bus-native architecture with horizontally scaled worker services (compose/k8s), a coordinator-only API container, and shared run state in Redis or Postgres (SQLite retained for local dev). Harden the bus with idempotency keys, retry policy, and dead-letter topics; version envelopes with Avro and Schema Registry. Expand `causalops.evidence`, add S3/MinIO refs for large artifacts, in-flight run recovery after restarts, and observability (consumer lag, run-phase dashboards, DLQ alerting). Migrate via existing `WorkerExecutor` (in-process → remote) and `RunStore` (SQLite → Redis) interfaces while keeping spawn/artifact shapes and coordinator barrier rules unchanged.
 - **Cross-Run Evolution Memory:** Persist the best policy priors across completed runs so future island populations can start from learned historical priors instead of only run-local seeds.
 - **Online RL With Live Kafka Feedback:** Extend the current run-level policy-learning pass into a continuously running controller that updates Q-values as new KG events arrive.
 - **Federated Multi-Swarm Coordination:** Extend the architecture toward federated swarm interoperability, where independent agent clusters can exchange semantic state, negotiate objectives, and collaboratively solve large-scale problems while preserving localized autonomy and fault isolation.

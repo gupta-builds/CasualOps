@@ -1,8 +1,8 @@
-# HiveMind — Claude Code Project Instructions
+# CausalOps — Claude Code Project Instructions
 
 ## What This Project Is
 
-HiveMind is an evidence-backed causal reasoning engine for cyber SOC operations. The core design principle: **the LLM proposes hypotheses, deterministic code falsifies them**. The LLM designs a causal DAG. A separate evidence compiler ingests real SIEM/CVE/incident data, gates it statistically, and only then runs DoWhy estimation. If evidence is too weak, ATE is withheld. This is not a bug — it is the point.
+CausalOps is an evidence-backed causal reasoning engine for cyber SOC operations. The core design principle: **the LLM proposes hypotheses, deterministic code falsifies them**. The LLM designs a causal DAG. A separate evidence compiler ingests real SIEM/CVE/incident data, gates it statistically, and only then runs DoWhy estimation. If evidence is too weak, ATE is withheld. This is not a bug — it is the point.
 
 ## The Task in Progress
 
@@ -52,7 +52,7 @@ src/
   estimators.py       ← DoWhy + statsmodels            !! DO NOT TOUCH !!
   evidence_adapters.py← SIEM/CVE/incident normalization
   benchmarking.py     ← Deterministic tier scoring
-  engine.py           ← run_hivemind() + artifact persistence
+  engine.py           ← run_causalops() + artifact persistence
   api.py              ← FastAPI: /run /estimate /demo/estimate normalizers
   demo_fixtures.py    ← Deterministic smoke-test evidence
   main.py             ← Legacy Streamlit UI
@@ -93,8 +93,8 @@ SUPABASE_URL=https://<new-project-ref>.supabase.co
 SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=             # REQUIRED for all Python backend writes (RLS)
 
-# HiveMind runtime
-HIVEMIND_ENABLE_SPAWN_WORKER=0         # "1" → in-process spawn worker (api container only)
+# CausalOps runtime
+CAUSALOPS_ENABLE_SPAWN_WORKER=0         # "1" → in-process spawn worker (api container only)
 KAFKA_BOOTSTRAP=localhost:19092        # only needed outside compose
 ```
 

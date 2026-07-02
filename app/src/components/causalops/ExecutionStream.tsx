@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Activity, Check, Loader2, Terminal, X } from "lucide-react";
-import type { ExecutionEvent } from "@/lib/hivemind-types";
+import type { ExecutionEvent } from "@/lib/causalops-types";
 import { cn } from "@/lib/utils";
 
 interface ExecutionStreamProps {

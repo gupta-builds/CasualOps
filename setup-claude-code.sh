@@ -78,10 +78,10 @@ echo "  ✓ settings.json"
 cat > "$REPO_ROOT/.mcp.json" << 'MCP'
 {
   "mcpServers": {
-    "hivemind-memory": {
+    "causalops-memory": {
       "type": "http",
       "url": "http://localhost:8000/mcp",
-      "description": "HiveMind persistent memory layer — vector search, entity graph, asset timeline. Start the API server first: cd src && uvicorn api:app --port 8000"
+      "description": "CausalOps persistent memory layer — vector search, entity graph, asset timeline. Start the API server first: cd src && uvicorn api:app --port 8000"
     }
   }
 }
@@ -238,11 +238,11 @@ echo "  ✓ commands/supabase-migrate.md"
 cat > "$CLAUDE_DIR/agents/memory-specialist.md" << 'AGENT'
 ---
 name: memory-specialist
-description: Expert subagent for implementing and debugging the HiveMind memory layer (src/memory/). Use this agent for tasks involving embedder.py, store.py, extractor.py, nodes.py, or mcp_server.py. Also use for Supabase pgvector schema work and FastMCP configuration.
+description: Expert subagent for implementing and debugging the CausalOps memory layer (src/memory/). Use this agent for tasks involving embedder.py, store.py, extractor.py, nodes.py, or mcp_server.py. Also use for Supabase pgvector schema work and FastMCP configuration.
 tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 
-You are a specialist in the HiveMind memory layer implementation.
+You are a specialist in the CausalOps memory layer implementation.
 
 ## Your scope
 

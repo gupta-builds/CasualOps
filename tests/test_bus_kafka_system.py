@@ -30,12 +30,12 @@ from schema import AgentConfig
 from worker.submit import submit_spawn_envelope
 
 
-def test_all_hivemind_topics_are_registered() -> None:
-    assert "hivemind.runs" in _ALL_TOPICS
-    assert "hivemind.spawn" in _ALL_TOPICS
-    assert "hivemind.artifacts" in _ALL_TOPICS
-    assert "hivemind.telemetry" in _ALL_TOPICS
-    assert "hivemind.dlq" in _ALL_TOPICS
+def test_all_causalops_topics_are_registered() -> None:
+    assert "causalops.runs" in _ALL_TOPICS
+    assert "causalops.spawn" in _ALL_TOPICS
+    assert "causalops.artifacts" in _ALL_TOPICS
+    assert "causalops.telemetry" in _ALL_TOPICS
+    assert "causalops.dlq" in _ALL_TOPICS
 
 
 def test_kafka_enabled_follows_bootstrap_env(monkeypatch: pytest.MonkeyPatch) -> None:

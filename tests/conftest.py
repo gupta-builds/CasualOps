@@ -1,4 +1,4 @@
-"""Shared fixtures for HiveMind's backend test suite."""
+"""Shared fixtures for CausalOps's backend test suite."""
 
 from __future__ import annotations
 

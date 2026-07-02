@@ -44,7 +44,7 @@ grand_orchestrator_prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "You are the Grand Orchestrator for HiveMind SOC operations. "
+            "You are the Grand Orchestrator for CausalOps SOC operations. "
             "Analyze the incident and decompose it into 2-3 distinct "
             "investigatory vectors, such as geopolitical context, network "
             "forensics, identity risk, supply-chain exposure, or insider "

@@ -1,4 +1,4 @@
-"""Standalone MCP server exposing the HiveMind memory layer.
+"""Standalone MCP server exposing the CausalOps memory layer.
 
 Runs as its own process — ``python -m memory.mcp_server`` — on stdio
 (Claude Desktop/Code) or SSE (docker, HTTP clients) depending on
@@ -15,9 +15,9 @@ from fastmcp import FastMCP
 from memory.store import SupabaseMemoryStore
 
 mcp = FastMCP(
-    "hivemind-memory",
+    "causalops-memory",
     instructions=(
-        "HiveMind persistent memory server. Use search_similar_incidents to "
+        "CausalOps persistent memory server. Use search_similar_incidents to "
         "retrieve context before starting a run. Use write_run_to_memory "
         "after DoWhy completes."
     ),
@@ -26,7 +26,7 @@ mcp = FastMCP(
 
 @mcp.tool()
 def search_similar_incidents(description: str, k: int = 5) -> list[dict[str, Any]]:
-    """Search past HiveMind runs similar to the given incident description.
+    """Search past CausalOps runs similar to the given incident description.
 
     Returns ranked results with similarity score, temporal weight, and a
     summary of the causal graph and estimate report from each past run.
@@ -57,7 +57,7 @@ def get_asset_timeline(asset_id: str, since_days: int = 90) -> list[dict[str, An
 
 @mcp.tool()
 def write_run_to_memory(run_artifact: dict[str, Any]) -> dict[str, Any]:
-    """Store a completed HiveMind run in the memory layer.
+    """Store a completed CausalOps run in the memory layer.
 
     Embeds the task description, indexes entities, and builds knowledge
     graph edges. Returns ``{"run_id": str, "entities_indexed": int}``.

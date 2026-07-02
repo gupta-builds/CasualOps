@@ -1,4 +1,4 @@
-"""LangGraph assembly for HiveMind's investigation and causal workflow.
+"""LangGraph assembly for CausalOps's investigation and causal workflow.
 
 Deprecated for execution in Phase 2b+: the coordinator + spawn workers drive
 parent/child fan-out. This module remains for reference and refutation routing

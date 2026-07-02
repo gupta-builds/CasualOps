@@ -1,4 +1,4 @@
-"""Shared schemas for HiveMind's agentic causal evidence pipeline.
+"""Shared schemas for CausalOps's agentic causal evidence pipeline.
 
 The project deliberately separates three layers:
 

@@ -1,4 +1,4 @@
-"""Azure OpenAI text embedding client for the HiveMind memory layer."""
+"""Azure OpenAI text embedding client for the CausalOps memory layer."""
 
 from __future__ import annotations
 

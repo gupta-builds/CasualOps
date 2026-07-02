@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
 import { TECHNIQUES, tacticById, type Technique, type TacticId } from "@/lib/mitre-catalog";
-import type { CausalEdge, CausalNode, RunResponse, Strategy } from "@/lib/hivemind-types";
+import type { CausalEdge, CausalNode, RunResponse, Strategy } from "@/lib/causalops-types";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/run")({
         Response.json(
           {
             ok: true,
-            service: "hivemind-causal-engine",
+            service: "causalops-causal-engine",
             endpoint: "/run",
             accepts: { method: "POST", body: { task_description: "string" } },
           },
@@ -50,7 +50,7 @@ export const Route = createFileRoute("/run")({
           return Response.json(buildRunResponse(parsed.data.task_description), {
             headers: {
               ...CORS_HEADERS,
-              "X-HiveMind-Backend": "internal-graph-only-engine",
+              "X-CausalOps-Backend": "internal-graph-only-engine",
             },
           });
         } catch (error) {

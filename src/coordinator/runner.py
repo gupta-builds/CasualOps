@@ -24,7 +24,7 @@ async def execute_run(
     correlation_id: str,
     store: RunStore | None = None,
 ) -> dict[str, Any]:
-    """Run the full HiveMind workflow via coordinator + run store."""
+    """Run the full CausalOps workflow via coordinator + run store."""
 
     run_store = store or get_run_store()
     try:
@@ -88,7 +88,7 @@ async def _run_memory_retrieve(record: RunRecord, store: RunStore) -> None:
     """Retrieve similar past runs before the orchestrator decomposes this one.
 
     Memory is additive, never required: any failure here is logged and
-    swallowed so a Supabase/embedding outage can't fail a HiveMind run.
+    swallowed so a Supabase/embedding outage can't fail a CausalOps run.
     """
 
     from memory.nodes import memory_retrieve_node
